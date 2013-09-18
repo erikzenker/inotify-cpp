@@ -8,8 +8,8 @@ I
 
 ## Build ##
    + Include Inotify.h
-   + compile with -lboost_system -lboost_filesystem
-   + example: g++ main.cc WebdavClient.cc -I . -lneon
+   + compile with -lboost_system -lboost_filesystem -std=c++11
+   + example: g++ main.cc Inotify.cc -I . -std=c++11  -lboost_system -lboost_filesystem
 
 ## Example ##
 Simple example for Inotify usage.
