@@ -12,7 +12,7 @@ I
    + example: g++ main.cc WebdavClient.cc -I . -lneon
 
 ## Example ##
-All methods of WebdavClient class used in a simple example.
+Simple example for Inotify usage.
 ```c++
 
 #include <Inotify.h>
