@@ -1,20 +1,3 @@
-Inotify 
-=======
-A C++ interface for linux inotify which is threadsafe
-
-## Description ##
- __Inotify__ is a C++ class, that lets you use linux inotify to watch files or directories.
-I
-
-## Build ##
-   + Include Inotify.h
-   + compile with -lboost_system -lboost_filesystem
-   + example: g++ main.cc WebdavClient.cc -I . -lneon
-
-## Example ##
-All methods of WebdavClient class used in a simple example.
-```c++
-
 #include <Inotify.h>
 #include <sys/inotify.h> /* IN_* */
 
@@ -56,17 +39,3 @@ int main(){
   
   return 0;
 }
-
-```
-   
-## Dependencies ##
- + boost
- + c++11
- + linux 2.6.13
-
-## Copyrigth
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.  
-This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
-
-## Author ##
-Written by Erik Zenker (erikzenker@hotmail.com)
