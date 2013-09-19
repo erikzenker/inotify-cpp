@@ -1,8 +1,9 @@
+
 #include <Inotify.h>
 #include <sys/inotify.h> /* IN_* */
+#include <FileSystemEvent.h>
 
 int main(){
-
   std::vector<std::string> ignoredFolders;
   unsigned int eventTimeout = 0;
   std::string dir("/my_dir/");
@@ -22,8 +23,8 @@ int main(){
   
   // Wait for maxEvents of this file
   for(unsigned eventCount = 0; eventCount < maxEvents; ++eventCount){
-    inotify_event event = inotify.getNextEvent();
-    std::cout << "Event " << inotify.maskToString(event.mask) << "for " << file << " was triggered!" << std::endl;
+    FileSystemEvent event = inotify.getNextEvent();
+    std::cout << "Event " << event.getMaskString() << "for " << event.getFullPath() << " was triggered!" << std::endl;
   }
   
   // Watch a directory (plus all subdirectories and files)
@@ -34,8 +35,8 @@ int main(){
   
   // Wait for maxEvents of this directory
   for(unsigned eventCount = 0; eventCount < maxEvents; ++eventCount){
-    inotify_event event = inotify.getNextEvent();
-    std::cout << "Event " << inotify.maskToString(event.mask) << "for " << file << " was triggered!" << std::endl;
+    FileSystemEvent event = inotify.getNextEvent();
+    std::cout << "Event " << event.getMaskString() << "for " << event.getFullPath() << " was triggered!" << std::endl;
   }
   
   return 0;

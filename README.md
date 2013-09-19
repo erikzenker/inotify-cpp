@@ -7,9 +7,9 @@ A C++ interface for linux inotify which is threadsafe
 See man inotify for more background information.
 
 ## Build ##
-   + Include Inotify.h
+   + Include Inotify.h FileSystemEvent.h
    + compile with -lboost_system -lboost_filesystem -std=c++11
-   + example: g++ main.cc Inotify.cc -I . -std=c++11 -lboost_system -lboost_filesystem
+   + example: g++ main.cc Inotify.cc FileSystemEvent.cc -I . -std=c++11 -lboost_system -lboost_filesystem
 
 ## Example ##
 Simple example for Inotify usage.
@@ -17,13 +17,14 @@ Simple example for Inotify usage.
 
 #include <Inotify.h>
 #include <sys/inotify.h> /* IN_* */
+#include <FileSystemEvent.h>
 
 int main(){
-
   std::vector<std::string> ignoredFolders;
   unsigned int eventTimeout = 0;
   std::string dir("/my_dir/");
   std::string file("my_file");
+  unsigned maxEvents = 5;
   uint32_t eventMask = IN_CREATE | IN_MODIFY | IN_DELETE | IN_MOVE;
 
 
@@ -32,26 +33,26 @@ int main(){
 
   // Watch a file for changes
   if(!inotify.watchFile(file)){
-    std::cout << "Can´t watch file " << file << "! Errno " << inotify.getLastError() <<std::endl;
+    std::cout << "Can´t watch file " << file << "! Errno " << strerror(inotify.getLastErrno())<< "!" << std::endl;
     exit(0);
   }
   
-  // Wait for 5 events of this file
-  for(unsigned eventCount = 0; eventCount < 5; ++eventCount){
-    inotify_event event = inotify.getNextEvent();
-    std::cout << "Event " << inotify.maskToString(event.mask) << "for " << file << " was triggered!" << std::endl;
+  // Wait for maxEvents of this file
+  for(unsigned eventCount = 0; eventCount < maxEvents; ++eventCount){
+    FileSystemEvent event = inotify.getNextEvent();
+    std::cout << "Event " << event.getMaskString() << "for " << event.getFullPath() << " was triggered!" << std::endl;
   }
   
   // Watch a directory (plus all subdirectories and files)
   if(!inotify.watchDirectoryRecursively(dir)){
-  std::cout << "Can´t watch directory " << dir << "! Errno " << inotify.getLastError() <<std::endl;
+    std::cout << "Can´t watch directory " << dir << "!" << strerror(inotify.getLastErrno()) << "!"<<std::endl;
     exit(0);
   }
   
-  // Wait for 5 events of this directory
-  for(unsigned eventCount = 0; eventCount < 5; ++eventCount){
-    inotify_event event = inotify.getNextEvent();
-    std::cout << "Event " << inotify.maskToString(event.mask) << "for " << file << " was triggered!" << std::endl;
+  // Wait for maxEvents of this directory
+  for(unsigned eventCount = 0; eventCount < maxEvents; ++eventCount){
+    FileSystemEvent event = inotify.getNextEvent();
+    std::cout << "Event " << event.getMaskString() << "for " << event.getFullPath() << " was triggered!" << std::endl;
   }
   
   return 0;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <boost/filesystem.hpp>
 
+#include <FileSystemEvent.h>
 #include <Inotify.h>
 
 Inotify::Inotify(std::vector<std::string> ignoredFolders,  unsigned eventTimeout, uint32_t eventMask) :
@@ -100,56 +101,12 @@ boost::filesystem::path Inotify::wdToFilename( int wd){
 
 }
 
-std::string Inotify::maskToString( uint32_t mask){
-   std::string maskString = "";
-
-  if(IN_ACCESS & mask)
-    maskString.append("IN_ACCESS ");
-  if(IN_ATTRIB & mask)
-    maskString.append("IN_ATTRIB ");
-  if(IN_CLOSE_WRITE & mask)
-    maskString.append("IN_CLOSE_WRITE ");
-  if(IN_CLOSE_NOWRITE & mask)
-    maskString.append("IN_CLOSE_NOWRITE ");
-  if(IN_CREATE & mask)
-    maskString.append("IN_CREATE ");
-  if(IN_DELETE & mask)
-    maskString.append("IN_DELETE ");
-  if(IN_DELETE_SELF & mask)
-    maskString.append("IN_DELETE_SELF ");
-  if(IN_MODIFY & mask)
-    maskString.append("IN_MODIFY ");
-  if(IN_MOVE_SELF & mask)
-    maskString.append("IN_MOVE_SELF ");
-  if(IN_MOVED_FROM & mask)
-    maskString.append("IN_MOVED_FROM ");
-  if(IN_MOVED_TO & mask)
-    maskString.append("IN_MOVED_TO ");
-  if(IN_OPEN & mask)
-    maskString.append("IN_OPEN ");
-  if(IN_ISDIR & mask)
-    maskString.append("IN_ISDIR ");
-  if(IN_UNMOUNT & mask)
-    maskString.append("IN_UNMOUNT ");
-  if(IN_Q_OVERFLOW & mask)
-    maskString.append("IN_Q_OVERFLOW ");
-  if(IN_CLOSE & mask)
-    maskString.append("IN_CLOSE ");
-  if(IN_IGNORED & mask)
-    maskString.append("IN_IGNORED ");
-  if(IN_ONESHOT & mask)
-    maskString.append("IN_ONESHOT ");
-
-  return maskString;
-}
-
-inotify_event Inotify::getNextEvent(){
+FileSystemEvent Inotify::getNextEvent(){
   assert(mIsInitialized);
-  inotify_event event;
   int length = 0;
   char buffer[EVENT_BUF_LEN];
   time_t currentEventTime = time(NULL);
-  std::vector<inotify_event> events;
+  std::vector<FileSystemEvent> events;
 
   // Read Events from fd into buffer
   while(mEventQueue.empty()){
@@ -171,13 +128,13 @@ inotify_event Inotify::getNextEvent(){
     currentEventTime = time(NULL);
     int i = 0;
     while(i < length){
-      event = *((struct inotify_event*) &buffer[i]);
-      //if(checkEvent(event) && event.mask != IN_IGNORED){
-      if(checkEvent(event)){
-	events.push_back(event);
+      inotify_event e = *((struct inotify_event*) &buffer[i]);
+      FileSystemEvent fsEvent(e.wd, e.mask, e.name, wdToFilename(e.wd).string());
+      if(checkEvent(fsEvent)){
+	events.push_back(fsEvent);
 
       }
-      i += EVENT_SIZE + event.len;
+      i += EVENT_SIZE + e.len;
 
     }
 
@@ -197,7 +154,7 @@ inotify_event Inotify::getNextEvent(){
   }
 
   // Return next event
-  event = mEventQueue.front();
+  FileSystemEvent event = mEventQueue.front();
   mEventQueue.pop();
 
   return event;
@@ -230,16 +187,15 @@ void Inotify::clearEventQueue(){
 
 }
 
-bool Inotify::onTimeout( time_t eventTime){
+bool Inotify::onTimeout(time_t eventTime){
   return (mLastEventTime + mEventTimeout) > eventTime;
-
 }
 
-bool Inotify::checkEvent( inotify_event event){
+bool Inotify::checkEvent(FileSystemEvent event){
   // Events seems to have no syncfolder,
   // this can happen if not the full event
   // was read from inotify fd
-  if(!wdToFilename(event.wd).string().compare("")){
+  if(!event.getWatchFolder().compare("")){
     return false;
   }
 

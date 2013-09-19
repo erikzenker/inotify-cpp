@@ -14,6 +14,8 @@
 #include <vector>
 #include <boost/filesystem.hpp>
 
+#include <FileSystemEvent.h>
+
 #define MAX_EVENTS     4096
 #define EVENT_SIZE     (sizeof (inotify_event))
 #define EVENT_BUF_LEN  (MAX_EVENTS * (EVENT_SIZE + 16))
@@ -36,7 +38,7 @@ class Inotify {
   bool watchDirectoryRecursively(boost::filesystem::path path);
   bool watchFile(boost::filesystem::path file);
   bool removeWatch(int wd);
-  inotify_event getNextEvent();
+  FileSystemEvent getNextEvent();
   int getLastErrno();
   boost::filesystem::path wdToFilename(int wd);
   std::string maskToString(uint32_t mask);
@@ -46,7 +48,7 @@ class Inotify {
   bool isIgnored(std::string file);
   void clearEventQueue();
   bool onTimeout(time_t eventTime);
-  bool checkEvent(inotify_event event);
+  bool checkEvent(FileSystemEvent event);
 
   // Member
   int mError;
@@ -54,7 +56,7 @@ class Inotify {
   time_t mLastEventTime;
   uint32_t mEventMask;
   std::vector<std::string> mIgnoredFolders;
-  std::queue<inotify_event> mEventQueue;
+  std::queue<FileSystemEvent> mEventQueue;
   std::map<int, boost::filesystem::path> mFolderMap;
   bool mIsInitialized;
   int mInotifyFd;
