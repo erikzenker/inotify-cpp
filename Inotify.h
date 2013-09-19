@@ -33,16 +33,15 @@ class Inotify {
  public:
   Inotify(std::vector< std::string> ignoredFolders,  unsigned eventTimeout, uint32_t eventMask);
   ~Inotify();
-  bool watchDirectoryRecursively(std::string watchFolder);
+  bool watchDirectoryRecursively(boost::filesystem::path path);
   bool watchFile(boost::filesystem::path file);
   bool removeWatch(int wd);
   inotify_event getNextEvent();
-  int getLastError();
-  std::string wdToFilename(int wd);
+  int getLastErrno();
+  boost::filesystem::path wdToFilename(int wd);
   std::string maskToString(uint32_t mask);
   
  private:
-  bool isDir(std::string folder);
   bool initialize();
   bool isIgnored(std::string file);
   void clearEventQueue();
@@ -56,7 +55,7 @@ class Inotify {
   uint32_t mEventMask;
   std::vector<std::string> mIgnoredFolders;
   std::queue<inotify_event> mEventQueue;
-  std::map<int, std::string> mFolderMap;
+  std::map<int, boost::filesystem::path> mFolderMap;
   bool mIsInitialized;
   int mInotifyFd;
 

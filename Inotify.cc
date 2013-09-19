@@ -42,64 +42,59 @@ bool Inotify::initialize(){
 
 }
 
-bool Inotify::watchDirectoryRecursively( std::string watchPath){
-  boost::filesystem::path path(watchPath);
-  if(boost::filesystem::is_directory(watchPath)){
-      boost::filesystem::recursive_directory_iterator it(path);
-      boost::filesystem::recursive_directory_iterator end;
+bool Inotify::watchDirectoryRecursively(boost::filesystem::path path){
+  assert(mIsInitialized);
+  if(boost::filesystem::is_directory(path)){
+    boost::filesystem::recursive_directory_iterator it(path);
+    boost::filesystem::recursive_directory_iterator end;
   
-      while(it != end){
+    while(it != end){
+      boost::filesystem::path currentPath = *it;
 
-	if(boost::filesystem::is_regular_file(*it)){
-	  watchFile(*it);
-	}
-	if(boost::filesystem::is_directory(*it)){
-	  watchFile(*it);
-	}
-
-	++it;
-
+      if(boost::filesystem::is_regular_file(currentPath) || boost::filesystem::is_directory(currentPath)){
+	watchFile(currentPath);
       }
+      ++it;
 
     }
+
+  }
   return watchFile(path);
 }
 
-bool Inotify::watchFile(boost::filesystem::path file){
+bool Inotify::watchFile(boost::filesystem::path filePath){
   assert(mIsInitialized);
   mError = 0;
   int wd = 0;
-  if(!isIgnored(file.string())){
-    wd = inotify_add_watch(mInotifyFd, file.string().c_str(), mEventMask);
-  }
-  else{
-    return true;
+  if(!isIgnored(filePath.string())){
+    wd = inotify_add_watch(mInotifyFd, filePath.string().c_str(), mEventMask);
   }
 
   if(wd == -1){
     mError = errno;
     if(mError == 28){
-      std::cout << "Failed to watch" << file.string() << "please increase number of watches in /proc/sys/fs/inotify/max_user_watches , Errno:" << mError << std::endl;
+      std::cout << "Failed to watch" << filePath.string() << "please increase number of watches in /proc/sys/fs/inotify/max_user_watches , Errno:" << mError << std::endl;
       return true;
     }
     return false;
 
   }
-  mFolderMap[wd] = file.string();
+  mFolderMap[wd] = filePath;
   return true;
 
 }
 
 bool Inotify::removeWatch( int wd){
-  int error = inotify_rm_watch(mInotifyFd, wd);
-  if(errno <= 0){
+  int result = inotify_rm_watch(mInotifyFd, wd);
+  if(result == -1){
+    mError = errno;
     return false;
   }
   mFolderMap.erase(wd);
   return true;
 }
 
-std::string Inotify::wdToFilename( int wd){
+boost::filesystem::path Inotify::wdToFilename( int wd){
   assert(mIsInitialized);
   return mFolderMap[wd];
 
@@ -209,7 +204,7 @@ inotify_event Inotify::getNextEvent(){
 
 }
 
-int Inotify::getLastError(){
+int Inotify::getLastErrno(){
   return mError;
 
 }
@@ -244,7 +239,7 @@ bool Inotify::checkEvent( inotify_event event){
   // Events seems to have no syncfolder,
   // this can happen if not the full event
   // was read from inotify fd
-  if(!wdToFilename(event.wd).compare("")){
+  if(!wdToFilename(event.wd).string().compare("")){
     return false;
   }
 
