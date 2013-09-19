@@ -1,4 +1,3 @@
-
 #include <Inotify.h>
 #include <sys/inotify.h> /* IN_* */
 #include <FileSystemEvent.h>
