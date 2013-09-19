@@ -4,12 +4,11 @@ A C++ interface for linux inotify which is threadsafe
 
 ## Description ##
  __Inotify__ is a C++ class, that lets you use linux inotify to watch files or directories.
-I
 
 ## Build ##
    + Include Inotify.h
    + compile with -lboost_system -lboost_filesystem -std=c++11
-   + example: g++ main.cc Inotify.cc -I . -std=c++11  -lboost_system -lboost_filesystem
+   + example: g++ main.cc Inotify.cc -I . -std=c++11 -lboost_system -lboost_filesystem
 
 ## Example ##
 Simple example for Inotify usage.
