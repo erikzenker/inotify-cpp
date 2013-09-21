@@ -37,18 +37,15 @@ class Inotify {
   ~Inotify();
   bool watchDirectoryRecursively(boost::filesystem::path path);
   bool watchFile(boost::filesystem::path file);
-  bool removeWatch(int wd);
   FileSystemEvent getNextEvent();
   int getLastErrno();
-  boost::filesystem::path wdToFilename(int wd);
-  std::string maskToString(uint32_t mask);
   
  private:
+  boost::filesystem::path wdToFilename(int wd);
   bool initialize();
   bool isIgnored(std::string file);
-  void clearEventQueue();
   bool onTimeout(time_t eventTime);
-  bool checkEvent(FileSystemEvent event);
+  bool removeWatch(int wd);  // Todo
 
   // Member
   int mError;

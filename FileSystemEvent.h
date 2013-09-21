@@ -9,6 +9,7 @@
 #define FileSystemEvent_H
 
 #include <string>
+#include <boost/filesystem.hpp>
 
 /**
  * @brief Container for events on filesystem.
@@ -26,14 +27,12 @@
  **/
 class FileSystemEvent {
  public:
-  FileSystemEvent(int wd, uint32_t mask, std::string filename, std::string watchFolder);
+  FileSystemEvent(int wd, uint32_t mask, boost::filesystem::path path);
   ~FileSystemEvent();
   uint32_t getMask();
   int getWd();
   std::string getMaskString();
-  std::string getFilename();
-  std::string getWatchFolder();
-  std::string getFullPath();
+  boost::filesystem::path getPath();
 
  private:
   std::string maskToString(uint32_t events);
@@ -41,8 +40,7 @@ class FileSystemEvent {
   // Member
   int mWd;
   uint32_t mMask;
-  std::string mFilename;
-  std::string mWatchFolder;
+  boost::filesystem::path mPath;
 
 };
 

@@ -1,44 +1,33 @@
 #include <string>
 #include <sys/inotify.h>
+#include <boost/filesystem.hpp>
 
 #include <FileSystemEvent.h>
 
-FileSystemEvent::FileSystemEvent(int wd, uint32_t mask, std::string filename, std::string watchFolder) :
+FileSystemEvent::FileSystemEvent(int wd, uint32_t mask, boost::filesystem::path path) :
   mWd(wd),
   mMask(mask),
-  mFilename(filename){
-  
-  if(watchFolder[watchFolder.size()-1] != '/')
-    watchFolder.append("/");
-  mWatchFolder = watchFolder;
+  mPath(path){
+
 }
 
 FileSystemEvent::~FileSystemEvent(){
-
 }
 
 uint32_t FileSystemEvent::getMask(){
   return mMask;
 }
 
-std::string FileSystemEvent::getFilename(){
-  return mFilename;
-}
-
 int FileSystemEvent::getWd(){
   return mWd;
-}
-
-std::string FileSystemEvent::getWatchFolder(){
-  return mWatchFolder;
 }
 
 std::string FileSystemEvent::getMaskString(){
   return maskToString(mMask);
 }
 
-std::string FileSystemEvent::getFullPath(){
-  return mWatchFolder.append(mFilename);
+boost::filesystem::path FileSystemEvent::getPath(){
+  return mPath;
 }
 
 std::string FileSystemEvent::maskToString(uint32_t mask){

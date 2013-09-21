@@ -45,22 +45,25 @@ bool Inotify::initialize(){
 
 bool Inotify::watchDirectoryRecursively(boost::filesystem::path path){
   assert(mIsInitialized);
-  if(boost::filesystem::is_directory(path)){
-    boost::filesystem::recursive_directory_iterator it(path);
-    boost::filesystem::recursive_directory_iterator end;
+  if(boost::filesystem::exists(path)){
+    if(boost::filesystem::is_directory(path)){
+      boost::filesystem::recursive_directory_iterator it(path);
+      boost::filesystem::recursive_directory_iterator end;
   
-    while(it != end){
-      boost::filesystem::path currentPath = *it;
+      while(it != end){
+	boost::filesystem::path currentPath = *it;
 
-      if(boost::filesystem::is_regular_file(currentPath) || boost::filesystem::is_directory(currentPath)){
-	watchFile(currentPath);
+	if(boost::filesystem::is_directory(currentPath)){
+	  watchFile(currentPath);
+	}
+	++it;
+
       }
-      ++it;
 
     }
-
+    return watchFile(path);
   }
-  return watchFile(path);
+  return false;
 }
 
 bool Inotify::watchFile(boost::filesystem::path filePath){
@@ -85,7 +88,7 @@ bool Inotify::watchFile(boost::filesystem::path filePath){
 
 }
 
-bool Inotify::removeWatch( int wd){
+bool Inotify::removeWatch(int wd){
   int result = inotify_rm_watch(mInotifyFd, wd);
   if(result == -1){
     mError = errno;
@@ -128,13 +131,13 @@ FileSystemEvent Inotify::getNextEvent(){
     currentEventTime = time(NULL);
     int i = 0;
     while(i < length){
-      inotify_event e = *((struct inotify_event*) &buffer[i]);
-      FileSystemEvent fsEvent(e.wd, e.mask, e.name, wdToFilename(e.wd).string());
-      if(checkEvent(fsEvent)){
+      inotify_event *e = ((struct inotify_event*) &buffer[i]);
+      FileSystemEvent fsEvent(e->wd, e->mask, wdToFilename(e->wd).string() + e->name);
+      if(!fsEvent.getPath().empty()){
 	events.push_back(fsEvent);
 
       }
-      i += EVENT_SIZE + e.len;
+      i += EVENT_SIZE + e->len;
 
     }
 
@@ -156,7 +159,6 @@ FileSystemEvent Inotify::getNextEvent(){
   // Return next event
   FileSystemEvent event = mEventQueue.front();
   mEventQueue.pop();
-
   return event;
 
 }
@@ -180,25 +182,6 @@ bool Inotify::isIgnored( std::string file){
   return false;
 }
 
-void Inotify::clearEventQueue(){
-  for(unsigned eventCount = 0; eventCount < mEventQueue.size(); eventCount++){
-    mEventQueue.pop();
-  }
-
-}
-
 bool Inotify::onTimeout(time_t eventTime){
   return (mLastEventTime + mEventTimeout) > eventTime;
-}
-
-bool Inotify::checkEvent(FileSystemEvent event){
-  // Events seems to have no syncfolder,
-  // this can happen if not the full event
-  // was read from inotify fd
-  if(!event.getWatchFolder().compare("")){
-    return false;
-  }
-
-  return true;
-
 }
