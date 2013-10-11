@@ -132,7 +132,7 @@ FileSystemEvent Inotify::getNextEvent(){
     int i = 0;
     while(i < length){
       inotify_event *e = ((struct inotify_event*) &buffer[i]);
-      FileSystemEvent fsEvent(e->wd, e->mask, wdToFilename(e->wd).string() + e->name);
+      FileSystemEvent fsEvent(e->wd, e->mask, wdToFilename(e->wd).string() + "/" +e->name);
       if(!fsEvent.getPath().empty()){
 	events.push_back(fsEvent);
 
