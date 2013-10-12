@@ -16,7 +16,6 @@ Simple example for Inotify usage.
 ```c++
 
 #include <Inotify.h>
-#include <sys/inotify.h> /* IN_* */
 #include <FileSystemEvent.h>
 
 int main(int argc, char** argv){
@@ -25,13 +24,16 @@ int main(int argc, char** argv){
     exit(0);
   }
 
-  std::vector<std::string> ignoredFolders;
-  unsigned int eventTimeout = 0;
+  // Directory to watch
   std::string dir(argv[1]);
+
+  // Init constructor arguments
+  std::vector<std::string> ignoredDirectories;
+  unsigned eventTimeout = 0;
   uint32_t eventMask = IN_CREATE | IN_MODIFY | IN_DELETE | IN_MOVE;
 
   // Init inotify
-  Inotify inotify(ignoredFolders, eventTimeout, eventMask);
+  Inotify inotify(ignoredDirectories, eventTimeout, eventMask);
   
   // Watch a directory (plus all subdirectories and files)
   if(!inotify.watchDirectoryRecursively(dir)){

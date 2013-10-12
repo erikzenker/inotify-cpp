@@ -1,5 +1,4 @@
 #include <Inotify.h>
-#include <sys/inotify.h> /* IN_* */
 #include <FileSystemEvent.h>
 
 int main(int argc, char** argv){
