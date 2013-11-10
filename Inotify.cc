@@ -53,7 +53,7 @@ bool Inotify::watchDirectoryRecursively(boost::filesystem::path path){
       while(it != end){
 	boost::filesystem::path currentPath = *it;
 
-	if(boost::filesystem::is_directory(currentPath)){
+	if(boost::filesystem::is_directory(currentPath) || boost::filesystem::is_symlink(currentPath)){
 	  watchFile(currentPath);
 	}
 	++it;
