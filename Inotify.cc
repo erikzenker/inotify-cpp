@@ -47,13 +47,16 @@ bool Inotify::watchDirectoryRecursively(boost::filesystem::path path){
   assert(mIsInitialized);
   if(boost::filesystem::exists(path)){
     if(boost::filesystem::is_directory(path)){
-      boost::filesystem::recursive_directory_iterator it(path);
+      boost::filesystem::recursive_directory_iterator it(path, boost::filesystem::symlink_option::recurse);
       boost::filesystem::recursive_directory_iterator end;
   
       while(it != end){
 	boost::filesystem::path currentPath = *it;
 
-	if(boost::filesystem::is_directory(currentPath) || boost::filesystem::is_symlink(currentPath)){
+	if(boost::filesystem::is_directory(currentPath)){
+	  watchFile(currentPath);
+	}
+	if(boost::filesystem::is_symlink(currentPath)){
 	  watchFile(currentPath);
 	}
 	++it;
@@ -132,14 +135,20 @@ FileSystemEvent Inotify::getNextEvent(){
     int i = 0;
     while(i < length){
       inotify_event *e = ((struct inotify_event*) &buffer[i]);
-      FileSystemEvent fsEvent(e->wd, e->mask, wdToFilename(e->wd) / e->name);
+      boost::filesystem::path path(wdToFilename(e->wd));
+      if(!boost::filesystem::is_symlink(path)){
+	path = path / std::string(e->name);
+      }
+      FileSystemEvent fsEvent(e->wd, e->mask, path);
       if(!fsEvent.getPath().empty()){
 	events.push_back(fsEvent);
-
+	
       }
+
       i += EVENT_SIZE + e->len;
 
     }
+    
 
     // Filter events for timeout
     for(auto eventIter = events.begin(); eventIter < events.end(); ++eventIter){
