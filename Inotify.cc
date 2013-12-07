@@ -139,6 +139,9 @@ FileSystemEvent Inotify::getNextEvent(){
       if(!boost::filesystem::is_symlink(path)){
 	path = path / std::string(e->name);
       }
+      if(boost::filesystem::is_directory(path)){
+	e->mask |= IN_ISDIR;
+      }
       FileSystemEvent fsEvent(e->wd, e->mask, path);
       if(!fsEvent.getPath().empty()){
 	events.push_back(fsEvent);
