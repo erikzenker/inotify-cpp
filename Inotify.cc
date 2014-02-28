@@ -2,61 +2,65 @@
 #include <assert.h>
 #include <errno.h>
 #include <time.h>
+#include <errno.h>
 #include <string>
 #include <vector>
+#include <exception>
+#include <sstream>
 #include <boost/filesystem.hpp>
+
 
 #include <FileSystemEvent.h>
 #include <Inotify.h>
 
-Inotify::Inotify(std::vector<std::string> ignoredFolders,  unsigned eventTimeout, uint32_t eventMask) :
+
+Inotify::Inotify(std::vector<std::string> ignoredDirectories,  unsigned eventTimeout, uint32_t eventMask) :
   mError(0),
   mEventTimeout(eventTimeout),
   mLastEventTime(0),
   mEventMask(eventMask),
-  mIgnoredFolders(ignoredFolders),
-  mIsInitialized(false),
+  mIgnoredDirectories(ignoredDirectories),
   mInotifyFd(0){
   
-  initialize();
+  // Initialize inotify
+  mInotifyFd = inotify_init();
+  if(mInotifyFd == -1){
+    mError = errno;
+    std::stringstream errorStream;
+    errorStream << "Can't initialize inotify ! " << strerror(mError) << ".";
+    throw std::runtime_error(errorStream.str());
+  }
 
 }
 
 Inotify::~Inotify(){
-  assert(mIsInitialized);
   if(!close(mInotifyFd)){
     mError = errno;
   }
-}
-
-bool Inotify::initialize(){
-  // Try to initialise inotify
-  if(!mIsInitialized){
-    mInotifyFd = inotify_init();
-    if(mInotifyFd == -1){
-      mError = errno;
-      return false;
-    }
-    mIsInitialized = true;
-  }
-  return true;
 
 }
 
-bool Inotify::watchDirectoryRecursively(boost::filesystem::path path){
-  assert(mIsInitialized);
-  if(boost::filesystem::exists(path)){
-    if(boost::filesystem::is_directory(path)){
-      boost::filesystem::recursive_directory_iterator it(path, boost::filesystem::symlink_option::recurse);
-      boost::filesystem::recursive_directory_iterator end;
+/**
+ * @brief Adds the given path and all files and subdirectories
+ *        to the set of watched files/directories.
+ *        Symlinks will be followed!
+ *
+ * @param path that will be watched recursively
+ *
+ */
+void Inotify::watchDirectoryRecursively(fs::path path){
+  if(fs::exists(path)){
+    if(fs::is_directory(path)){
+      fs::recursive_directory_iterator it(path, fs::symlink_option::recurse);
+      fs::recursive_directory_iterator end;
   
       while(it != end){
-	boost::filesystem::path currentPath = *it;
+	fs::path currentPath = *it;
 
-	if(boost::filesystem::is_directory(currentPath)){
+	if(fs::is_directory(currentPath)){
 	  watchFile(currentPath);
 	}
-	if(boost::filesystem::is_symlink(currentPath)){
+	if(fs::is_symlink(currentPath)){
 	  watchFile(currentPath);
 	}
 	++it;
@@ -64,13 +68,25 @@ bool Inotify::watchDirectoryRecursively(boost::filesystem::path path){
       }
 
     }
-    return watchFile(path);
+    watchFile(path);
   }
-  return false;
+  else {
+    throw std::invalid_argument("Can´t watch Path! Path does not exist. Path: " + path.string());
+  }
+
 }
 
-bool Inotify::watchFile(boost::filesystem::path filePath){
-  assert(mIsInitialized);
+/**
+ * @brief Adds a single file/directorie to the list of
+ *        watches. Path and corresponding watchdescriptor
+ *        will be stored in the directorieMap. This is done
+ *        because events on watches just return this
+ *        watchdescriptor.
+ *
+ * @param path that will be watched
+ *
+ */
+void Inotify::watchFile(fs::path filePath){
   mError = 0;
   int wd = 0;
   if(!isIgnored(filePath.string())){
@@ -79,36 +95,55 @@ bool Inotify::watchFile(boost::filesystem::path filePath){
 
   if(wd == -1){
     mError = errno;
+    std::stringstream errorStream;
     if(mError == 28){
-      std::cout << "Failed to watch" << filePath.string() << "please increase number of watches in /proc/sys/fs/inotify/max_user_watches , Errno:" << mError << std::endl;
-      return true;
+      errorStream << "Failed to watch! " << strerror(mError) << ". Please increase number of watches in \"/proc/sys/fs/inotify/max_user_watches\".";
+      throw std::runtime_error(errorStream.str());
     }
-    return false;
+
+    errorStream << "Failed to watch! " << strerror(mError) << ". Path: "<<filePath.string();
+    throw std::runtime_error(errorStream.str());
 
   }
-  mFolderMap[wd] = filePath;
-  return true;
+  mDirectorieMap[wd] = filePath;
 
 }
 
-bool Inotify::removeWatch(int wd){
+/**
+ * @brief Removes watch from set of watches. This
+ *        is not done recursively!
+ *
+ * @param wd watchdescriptor
+ *
+ */
+void Inotify::removeWatch(int wd){
   int result = inotify_rm_watch(mInotifyFd, wd);
   if(result == -1){
     mError = errno;
-    return false;
+    std::stringstream errorStream;
+    errorStream << "Failed to remove watch! " << strerror(mError) << ".";
+    throw std::runtime_error(errorStream.str());
   }
-  mFolderMap.erase(wd);
-  return true;
+  mDirectorieMap.erase(wd);
 }
 
-boost::filesystem::path Inotify::wdToFilename( int wd){
-  assert(mIsInitialized);
-  return mFolderMap[wd];
+
+fs::path Inotify::wdToPath(int wd){
+  return mDirectorieMap[wd];
 
 }
 
+/**
+ * @brief Blocking wait on new events of watched files/directories 
+ *        specified on the eventmask. FileSystemEvents
+ *        will be returned one by one. Thus this
+ *        function can be called in some while(true)
+ *        loop.
+ *
+ * @return A new FileSystemEvent
+ *
+ */
 FileSystemEvent Inotify::getNextEvent(){
-  assert(mIsInitialized);
   int length = 0;
   char buffer[EVENT_BUF_LEN];
   time_t currentEventTime = time(NULL);
@@ -135,11 +170,11 @@ FileSystemEvent Inotify::getNextEvent(){
     int i = 0;
     while(i < length){
       inotify_event *e = ((struct inotify_event*) &buffer[i]);
-      boost::filesystem::path path(wdToFilename(e->wd));
-      if(!boost::filesystem::is_symlink(path)){
+      fs::path path(wdToPath(e->wd));
+      if(!fs::is_symlink(path)){
 	path = path / std::string(e->name);
       }
-      if(boost::filesystem::is_directory(path)){
+      if(fs::is_directory(path)){
 	e->mask |= IN_ISDIR;
       }
       FileSystemEvent fsEvent(e->wd, e->mask, path);
@@ -154,14 +189,14 @@ FileSystemEvent Inotify::getNextEvent(){
     
 
     // Filter events for timeout
-    for(auto eventIter = events.begin(); eventIter < events.end(); ++eventIter){
+    for(auto eventIt = events.begin(); eventIt < events.end(); ++eventIt){
       if(onTimeout(currentEventTime)){
-	events.erase(eventIter);
+	events.erase(eventIt);
     
       }
       else{
 	mLastEventTime = currentEventTime;
-	mEventQueue.push(*eventIter);
+	mEventQueue.push(*eventIt);
       }
 
     }
@@ -181,12 +216,12 @@ int Inotify::getLastErrno(){
 }
 
 bool Inotify::isIgnored( std::string file){
-  if(mIgnoredFolders.empty()){
+  if(mIgnoredDirectories.empty()){
     return false;
   }
 
-  for(unsigned i = 0; i < mIgnoredFolders.size(); ++i){
-    size_t pos = file.find(mIgnoredFolders[i]);
+  for(unsigned i = 0; i < mIgnoredDirectories.size(); ++i){
+    size_t pos = file.find(mIgnoredDirectories[i]);
     if(pos!= std::string::npos){
       return true;
     }

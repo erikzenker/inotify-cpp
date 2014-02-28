@@ -11,20 +11,20 @@ int main(int argc, char** argv){
   std::string dir(argv[1]);
 
   // Init constructor arguments
+
   std::vector<std::string> ignoredDirectories;
   unsigned eventTimeout = 0;
   uint32_t eventMask = IN_CREATE | IN_MODIFY | IN_DELETE | IN_MOVE;
 
   // Init inotify
+  std::cout << "Setup watches for \"" << dir <<"\"..." << std::endl;
   Inotify inotify(ignoredDirectories, eventTimeout, eventMask);
   
   // Watch a directory (plus all subdirectories and files)
-  if(!inotify.watchDirectoryRecursively(dir)){
-    std::cout << "Can´t watch directory " << dir << "! " << strerror(inotify.getLastErrno()) << "!"<<std::endl;
-    exit(0);
-  }
+  inotify.watchDirectoryRecursively(dir);
   
   // Wait for event of this directory
+  std::cout << "Waiting for events..." << std::endl;
   while(true){
     FileSystemEvent event = inotify.getNextEvent();
     std::cout << "Event wd(" << event.getWd() << ") " << event.getMaskString() << "for " << event.getPath() << " was triggered!" << std::endl;

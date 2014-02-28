@@ -5,9 +5,7 @@
  * @copyright Gnu Public License
  **/
 
-#ifndef FileSystemEvent_H
-#define FileSystemEvent_H
-
+#pragma once
 #include <string>
 #include <boost/filesystem.hpp>
 
@@ -17,12 +15,6 @@
  *        FileSystemEvent.h
  *        "include/FileSystemEvent.h"
  *
- * The intention for FileSystemEvent was to
- * create some common interface for different
- * filesystem scan methods. For example you
- * could poll your filesystem every 10 seconds
- * to seek for changes or use inotify which detects 
- * events by it self.
  *
  **/
 class FileSystemEvent {
@@ -44,4 +36,3 @@ class FileSystemEvent {
 
 };
 
-#endif /* FileSystemEvent_H */
