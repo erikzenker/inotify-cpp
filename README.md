@@ -28,7 +28,7 @@ int main(int argc, char** argv){
   boost::filesystem::path dir(argv[1]);
 
   // Init inotify
-  std::cout << "Setup watches for \"" << dir.string() <<"\"..." << std::endl;
+  std::cout << "Setup watches for " << dir <<"..." << std::endl;
   Inotify inotify(IN_CREATE | IN_MODIFY | IN_DELETE | IN_MOVE);
   
   // Watch a directory (plus all subdirectories and files)
