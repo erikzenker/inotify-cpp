@@ -13,6 +13,29 @@
 #include <FileSystemEvent.h>
 #include <Inotify.h>
 
+Inotify::Inotify() :
+  mError(0),
+  mEventTimeout(0),
+  mLastEventTime(0),
+  mEventMask(IN_ALL_EVENTS),
+  mIgnoredDirectories(std::vector<std::string>()),
+  mInotifyFd(0){
+
+  // Initialize inotify
+  init();
+}
+
+Inotify::Inotify(uint32_t eventMask) :
+  mError(0),
+  mEventTimeout(0),
+  mLastEventTime(0),
+  mEventMask(eventMask),
+  mIgnoredDirectories(std::vector<std::string>()),
+  mInotifyFd(0){
+
+  // Initialize inotify
+  init();
+}
 
 Inotify::Inotify(std::vector<std::string> ignoredDirectories,  unsigned eventTimeout, uint32_t eventMask) :
   mError(0),
@@ -23,19 +46,23 @@ Inotify::Inotify(std::vector<std::string> ignoredDirectories,  unsigned eventTim
   mInotifyFd(0){
   
   // Initialize inotify
+  init();
+}
+
+Inotify::~Inotify(){
+  if(!close(mInotifyFd)){
+    mError = errno;
+  }
+
+}
+
+void Inotify::init(){
   mInotifyFd = inotify_init();
   if(mInotifyFd == -1){
     mError = errno;
     std::stringstream errorStream;
     errorStream << "Can't initialize inotify ! " << strerror(mError) << ".";
     throw std::runtime_error(errorStream.str());
-  }
-
-}
-
-Inotify::~Inotify(){
-  if(!close(mInotifyFd)){
-    mError = errno;
   }
 
 }
@@ -101,11 +128,16 @@ void Inotify::watchFile(fs::path filePath){
       throw std::runtime_error(errorStream.str());
     }
 
-    errorStream << "Failed to watch! " << strerror(mError) << ". Path: "<<filePath.string();
+    errorStream << "Failed to watch! " << strerror(mError) << ". Path: " << filePath.string();
     throw std::runtime_error(errorStream.str());
 
   }
   mDirectorieMap[wd] = filePath;
+
+}
+
+void Inotify::ignoreFileOnce(fs::path file){
+  mOnceIgnoredDirectories.push_back(file.string());
 
 }
 
@@ -151,6 +183,8 @@ FileSystemEvent Inotify::getNextEvent(){
 
   // Read Events from fd into buffer
   while(mEventQueue.empty()){
+    length = 0;
+    memset(&buffer, 0, EVENT_BUF_LEN);
     while(length <= 0 ){
       length = read(mInotifyFd, buffer, EVENT_BUF_LEN);
       currentEventTime = time(NULL);
@@ -188,15 +222,19 @@ FileSystemEvent Inotify::getNextEvent(){
     }
     
 
-    // Filter events for timeout
+    // Filter events
     for(auto eventIt = events.begin(); eventIt < events.end(); ++eventIt){
+      FileSystemEvent currentEvent = *eventIt;
       if(onTimeout(currentEventTime)){
 	events.erase(eventIt);
     
       }
+      else if(isIgnored(currentEvent.getPath().string())){
+      	events.erase(eventIt);
+      }
       else{
 	mLastEventTime = currentEventTime;
-	mEventQueue.push(*eventIt);
+	mEventQueue.push(currentEvent);
       }
 
     }
@@ -215,9 +253,17 @@ int Inotify::getLastErrno(){
 
 }
 
-bool Inotify::isIgnored( std::string file){
-  if(mIgnoredDirectories.empty()){
+bool Inotify::isIgnored(std::string file){
+  if(mIgnoredDirectories.empty() and mOnceIgnoredDirectories.empty()){
     return false;
+  }
+
+  for(unsigned i = 0; i < mOnceIgnoredDirectories.size(); ++i){
+    size_t pos = file.find(mOnceIgnoredDirectories[i]);
+    if(pos!= std::string::npos){
+      mOnceIgnoredDirectories.erase(mOnceIgnoredDirectories.begin() + i);
+      return true;
+    }
   }
 
   for(unsigned i = 0; i < mIgnoredDirectories.size(); ++i){
@@ -226,6 +272,7 @@ bool Inotify::isIgnored( std::string file){
       return true;
     }
   }
+
   return false;
 }
 

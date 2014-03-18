@@ -52,17 +52,20 @@ namespace fs = boost::filesystem;
  * IN_ALL_EVENTS     macro is defined as a bit mask of all of the above
  *                   events
  * IN_MOVE           IN_MOVED_FROM|IN_MOVED_TO
- * IN_CLOSE          IN_CLOSE_WRITE|IN_CLOSE_NOWRITE
+ * IN_CLOSE          IN_CLOSE_WRITE | IN_CLOSE_NOWRITE
  *
  * See inotify manpage for more event details
  *
  */
 class Inotify {
  public:
+  Inotify();
+  Inotify(uint32_t eventMask);
   Inotify(std::vector< std::string> ignoredDirectories,  unsigned eventTimeout, uint32_t eventMask);
   ~Inotify();
   void watchDirectoryRecursively(fs::path path);
   void watchFile(fs::path file);
+  void ignoreFileOnce(fs::path file); // TODO
   FileSystemEvent getNextEvent();
   int getLastErrno();
   
@@ -70,7 +73,8 @@ class Inotify {
   fs::path wdToPath(int wd);
   bool isIgnored(std::string file);
   bool onTimeout(time_t eventTime);
-  void removeWatch(int wd);  // Todo
+  void removeWatch(int wd);  // TODO
+  void init();
 
   // Member
   int mError;
@@ -78,6 +82,7 @@ class Inotify {
   time_t mLastEventTime;
   uint32_t mEventMask;
   std::vector<std::string> mIgnoredDirectories;
+  std::vector<std::string> mOnceIgnoredDirectories;
   std::queue<FileSystemEvent> mEventQueue;
   std::map<int, fs::path> mDirectorieMap;
   int mInotifyFd;
