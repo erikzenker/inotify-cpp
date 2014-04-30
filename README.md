@@ -1,6 +1,6 @@
 Inotify 
 =======
-A C++ interface for linux inotify which is threadsafe
+A C++ header only library which wraps inotify which is threadsafe
 
 ## Description ##
  __Inotify__ is a C++ class, that lets you use linux inotify to watch files or directories.
@@ -9,11 +9,11 @@ See man inotify for more background information.
 ## Build ##
    + Include Inotify.h FileSystemEvent.h
    + compile with -lboost_system -lboost_filesystem -std=c++11
-   + example: clang++ main.cc FileSystemEvent.cc -I . -std=c++11 -lboost_system -lboost_filesystem
+   + example: clang++ main.cc -I . -std=c++11 -lboost_system -lboost_filesystem
      or just: make
 
 ## Example ##
-Simple example for Inotify usage.
+Simple example for Inotify usage (see main.cc).
 ```c++
 
 #include <Inotify.h>
@@ -41,7 +41,7 @@ int main(int argc, char** argv){
   std::cout << "Waiting for events..." << std::endl;
   while(true){
     FileSystemEvent event = inotify.getNextEvent();
-    std::cout << "Event wd(" << event.getWd() << ") " << event.getMaskString() << "for " << event.getPath() << " was triggered!" << std::endl;
+    std::cout << "Event wd(" << event.wd << ") " << event.getMaskString() << "for " << event.path << " was triggered!" << std::endl;
   }
   
   return 0;
