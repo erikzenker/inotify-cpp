@@ -65,7 +65,7 @@ class Inotify {
   ~Inotify();
   void watchDirectoryRecursively(fs::path path);
   void watchFile(fs::path file);
-  void ignoreFileOnce(fs::path file); // TODO
+  void ignoreFileOnce(fs::path file);
   FileSystemEvent getNextEvent();
   int getLastErrno();
   
