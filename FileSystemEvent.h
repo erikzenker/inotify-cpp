@@ -36,7 +36,7 @@ class FileSystemEvent {
 };
 
 
-FileSystemEvent::FileSystemEvent(const int wd, uint32_t mask, const boost::filesystem::path path) :
+inline FileSystemEvent::FileSystemEvent(const int wd, uint32_t mask, const boost::filesystem::path path) :
   isRecursive(false),
   wd(wd),
   mask(mask),
@@ -44,14 +44,14 @@ FileSystemEvent::FileSystemEvent(const int wd, uint32_t mask, const boost::files
 
 }
 
-FileSystemEvent::~FileSystemEvent(){
+inline FileSystemEvent::~FileSystemEvent(){
 }
 
-std::string FileSystemEvent::getMaskString() const{
+inline std::string FileSystemEvent::getMaskString() const{
   return maskToString(mask);
 }
 
-std::string FileSystemEvent::maskToString(uint32_t mask) const{
+inline std::string FileSystemEvent::maskToString(uint32_t mask) const{
     std::string maskString = "";
 
   if(IN_ACCESS & mask)

@@ -100,7 +100,7 @@ class Inotify {
 };
 
 
-Inotify::Inotify() :
+inline Inotify::Inotify() :
   mError(0),
   mEventTimeout(0),
   mLastEventTime(0),
@@ -112,7 +112,7 @@ Inotify::Inotify() :
   init();
 }
 
-Inotify::Inotify(uint32_t eventMask) :
+inline Inotify::Inotify(uint32_t eventMask) :
   mError(0),
   mEventTimeout(0),
   mLastEventTime(0),
@@ -124,7 +124,7 @@ Inotify::Inotify(uint32_t eventMask) :
   init();
 }
 
-Inotify::Inotify(std::vector<std::string> ignoredDirectories,  unsigned eventTimeout, uint32_t eventMask) :
+inline Inotify::Inotify(std::vector<std::string> ignoredDirectories,  unsigned eventTimeout, uint32_t eventMask) :
   mError(0),
   mEventTimeout(eventTimeout),
   mLastEventTime(0),
@@ -136,14 +136,14 @@ Inotify::Inotify(std::vector<std::string> ignoredDirectories,  unsigned eventTim
   init();
 }
 
-Inotify::~Inotify(){
+inline Inotify::~Inotify(){
   if(!close(mInotifyFd)){
     mError = errno;
   }
 
 }
 
-void Inotify::init(){
+inline void Inotify::init(){
   mInotifyFd = inotify_init();
   if(mInotifyFd == -1){
     mError = errno;
@@ -162,7 +162,7 @@ void Inotify::init(){
  * @param path that will be watched recursively
  *
  */
-void Inotify::watchDirectoryRecursively(fs::path path){
+inline void Inotify::watchDirectoryRecursively(fs::path path){
   if(fs::exists(path)){
     if(fs::is_directory(path)){
       fs::recursive_directory_iterator it(path, fs::symlink_option::recurse);
@@ -200,7 +200,7 @@ void Inotify::watchDirectoryRecursively(fs::path path){
  * @param path that will be watched
  *
  */
-void Inotify::watchFile(fs::path filePath){
+inline void Inotify::watchFile(fs::path filePath){
   if(fs::exists(filePath)){
     mError = 0;
     int wd = 0;
@@ -226,7 +226,7 @@ void Inotify::watchFile(fs::path filePath){
 }
 
 
-void Inotify::ignoreFileOnce(fs::path file){
+inline void Inotify::ignoreFileOnce(fs::path file){
   mOnceIgnoredDirectories.push_back(file.string());
 
 }
@@ -238,7 +238,7 @@ void Inotify::ignoreFileOnce(fs::path file){
  * @param wd watchdescriptor
  *
  */
-void Inotify::removeWatch(int wd){
+inline void Inotify::removeWatch(int wd){
   int result = inotify_rm_watch(mInotifyFd, wd);
   if(result == -1){
     mError = errno;
@@ -250,7 +250,7 @@ void Inotify::removeWatch(int wd){
 }
 
 
-fs::path Inotify::wdToPath(int wd){
+inline fs::path Inotify::wdToPath(int wd){
   return mDirectorieMap[wd];
 
 }
@@ -265,7 +265,7 @@ fs::path Inotify::wdToPath(int wd){
  * @return A new FileSystemEvent
  *
  */
-FileSystemEvent Inotify::getNextEvent(){
+inline FileSystemEvent Inotify::getNextEvent(){
   int length = 0;
   char buffer[EVENT_BUF_LEN];
   time_t currentEventTime = time(NULL);
@@ -339,12 +339,12 @@ FileSystemEvent Inotify::getNextEvent(){
 
 }
 
-int Inotify::getLastErrno(){
+inline int Inotify::getLastErrno(){
   return mError;
 
 }
 
-bool Inotify::isIgnored(std::string file){
+inline bool Inotify::isIgnored(std::string file){
   if(mIgnoredDirectories.empty() and mOnceIgnoredDirectories.empty()){
     return false;
   }
@@ -367,7 +367,7 @@ bool Inotify::isIgnored(std::string file){
   return false;
 }
 
-bool Inotify::onTimeout(time_t eventTime){
+inline bool Inotify::onTimeout(time_t eventTime){
   return (mLastEventTime + mEventTimeout) > eventTime;
 }
 
