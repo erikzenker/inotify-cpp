@@ -114,27 +114,30 @@ void Inotify::watchDirectoryRecursively(fs::path path){
  *
  */
 void Inotify::watchFile(fs::path filePath){
-  mError = 0;
-  int wd = 0;
-  if(!isIgnored(filePath.string())){
-    wd = inotify_add_watch(mInotifyFd, filePath.string().c_str(), mEventMask);
-  }
-
-  if(wd == -1){
-    mError = errno;
-    std::stringstream errorStream;
-    if(mError == 28){
-      errorStream << "Failed to watch! " << strerror(mError) << ". Please increase number of watches in \"/proc/sys/fs/inotify/max_user_watches\".";
-      throw std::runtime_error(errorStream.str());
+  if(fs::exists(filePath)){
+    mError = 0;
+    int wd = 0;
+    if(!isIgnored(filePath.string())){
+      wd = inotify_add_watch(mInotifyFd, filePath.string().c_str(), mEventMask);
     }
 
-    errorStream << "Failed to watch! " << strerror(mError) << ". Path: " << filePath.string();
-    throw std::runtime_error(errorStream.str());
+    if(wd == -1){
+      mError = errno;
+      std::stringstream errorStream;
+      if(mError == 28){
+	errorStream << "Failed to watch! " << strerror(mError) << ". Please increase number of watches in \"/proc/sys/fs/inotify/max_user_watches\".";
+	throw std::runtime_error(errorStream.str());
+      }
 
+      errorStream << "Failed to watch! " << strerror(mError) << ". Path: " << filePath.string();
+      throw std::runtime_error(errorStream.str());
+
+    }
+    mDirectorieMap[wd] = filePath;
   }
-  mDirectorieMap[wd] = filePath;
 
 }
+
 
 void Inotify::ignoreFileOnce(fs::path file){
   mOnceIgnoredDirectories.push_back(file.string());
@@ -203,21 +206,22 @@ FileSystemEvent Inotify::getNextEvent(){
     currentEventTime = time(NULL);
     int i = 0;
     while(i < length){
-      inotify_event *e = ((struct inotify_event*) &buffer[i]);
-      fs::path path(wdToPath(e->wd));
-      if(!fs::is_symlink(path)){
-	path = path / std::string(e->name);
-      }
+      inotify_event *event = ((struct inotify_event*) &buffer[i]);
+      fs::path path(wdToPath(event->wd) / std::string(event->name));
       if(fs::is_directory(path)){
-	e->mask |= IN_ISDIR;
+	event->mask |= IN_ISDIR;
       }
-      FileSystemEvent fsEvent(e->wd, e->mask, path);
-      if(!fsEvent.getPath().empty()){
+      FileSystemEvent fsEvent(event->wd, event->mask, path);
+
+      if(!fsEvent.path.empty()){
 	events.push_back(fsEvent);
 	
       }
+      else{
+	// Event is not complete --> ignore
+      }
 
-      i += EVENT_SIZE + e->len;
+      i += EVENT_SIZE + event->len;
 
     }
     
@@ -229,7 +233,7 @@ FileSystemEvent Inotify::getNextEvent(){
 	events.erase(eventIt);
     
       }
-      else if(isIgnored(currentEvent.getPath().string())){
+      else if(isIgnored(currentEvent.path.string())){
       	events.erase(eventIt);
       }
       else{
