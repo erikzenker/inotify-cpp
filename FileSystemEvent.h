@@ -19,20 +19,18 @@
  **/
 class FileSystemEvent {
  public:
-  FileSystemEvent(int wd, uint32_t mask, boost::filesystem::path path);
+  FileSystemEvent(int wd, uint32_t mask, const boost::filesystem::path path);
   ~FileSystemEvent();
-  uint32_t getMask();
-  int getWd();
-  std::string getMaskString();
-  boost::filesystem::path getPath();
+  std::string getMaskString() const;
+
+  /* Member */
+  bool isRecursive;
+  int wd;
+  uint32_t mask;
+  boost::filesystem::path path;
 
  private:
-  std::string maskToString(uint32_t events);
-
-  // Member
-  int mWd;
-  uint32_t mMask;
-  boost::filesystem::path mPath;
+  std::string maskToString(uint32_t events) const;
 
 };
 

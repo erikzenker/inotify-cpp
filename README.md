@@ -9,7 +9,8 @@ See man inotify for more background information.
 ## Build ##
    + Include Inotify.h FileSystemEvent.h
    + compile with -lboost_system -lboost_filesystem -std=c++11
-   + example: clang++ main.cc Inotify.cc FileSystemEvent.cc -I . -std=c++11 -lboost_system -lboost_filesystem
+   + example: clang++ main.cc FileSystemEvent.cc -I . -std=c++11 -lboost_system -lboost_filesystem
+     or just: make
 
 ## Example ##
 Simple example for Inotify usage.

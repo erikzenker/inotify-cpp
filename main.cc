@@ -23,7 +23,7 @@ int main(int argc, char** argv){
   std::cout << "Waiting for events..." << std::endl;
   while(true){
     FileSystemEvent event = inotify.getNextEvent();
-    std::cout << "Event wd(" << event.getWd() << ") " << event.getMaskString() << "for " << event.getPath() << " was triggered!" << std::endl;
+    std::cout << "Event wd(" << event.wd << ") " << event.mask << "for " << event.path << " was triggered!" << std::endl;
   }
   
   return 0;

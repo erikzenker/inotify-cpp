@@ -4,33 +4,22 @@
 
 #include <FileSystemEvent.h>
 
-FileSystemEvent::FileSystemEvent(int wd, uint32_t mask, boost::filesystem::path path) :
-  mWd(wd),
-  mMask(mask),
-  mPath(path){
+FileSystemEvent::FileSystemEvent(const int wd, uint32_t mask, const boost::filesystem::path path) :
+  isRecursive(false),
+  wd(wd),
+  mask(mask),
+  path(path){
 
 }
 
 FileSystemEvent::~FileSystemEvent(){
 }
 
-uint32_t FileSystemEvent::getMask(){
-  return mMask;
+std::string FileSystemEvent::getMaskString() const{
+  return maskToString(mask);
 }
 
-int FileSystemEvent::getWd(){
-  return mWd;
-}
-
-std::string FileSystemEvent::getMaskString(){
-  return maskToString(mMask);
-}
-
-boost::filesystem::path FileSystemEvent::getPath(){
-  return mPath;
-}
-
-std::string FileSystemEvent::maskToString(uint32_t mask){
+std::string FileSystemEvent::maskToString(uint32_t mask) const{
     std::string maskString = "";
 
   if(IN_ACCESS & mask)
