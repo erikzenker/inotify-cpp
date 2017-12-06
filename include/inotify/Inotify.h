@@ -1,8 +1,8 @@
 /** 
  * @file      Inotify.h
  * @author    Erik Zenker
- * @date      02.11.2012
- * @copyright Gnu Public License
+ * @date      20.11.2017
+ * @copyright MIT
  **/
 #pragma once
 #include <sys/inotify.h>
@@ -18,16 +18,18 @@
 #include <string>
 #include <exception>
 #include <sstream>
+#include <memory>
 #include <boost/filesystem.hpp>
 
 
-#include <FileSystemEvent.h>
+#include <inotify/FileSystemEvent.h>
 
 #define MAX_EVENTS     4096
 #define EVENT_SIZE     (sizeof (inotify_event))
 #define EVENT_BUF_LEN  (MAX_EVENTS * (EVENT_SIZE + 16))
 
 namespace fs = boost::filesystem;
+
 
 /**
  * @brief C++ wrapper for linux inotify interface
@@ -75,6 +77,7 @@ class Inotify {
   void watchDirectoryRecursively(fs::path path);
   void watchFile(fs::path file);
   void ignoreFileOnce(fs::path file);
+  void setEventMask(uint32_t eventMask);
   FileSystemEvent getNextEvent();
   int getLastErrno();
   
@@ -222,6 +225,9 @@ inline void Inotify::watchFile(fs::path filePath){
     }
     mDirectorieMap[wd] = filePath;
   }
+  else {
+      throw std::invalid_argument("Can´t watch Path! Path does not exist. Path: " + filePath.string());
+  }
 
 }
 
@@ -253,6 +259,10 @@ inline void Inotify::removeWatch(int wd){
 inline fs::path Inotify::wdToPath(int wd){
   return mDirectorieMap[wd];
 
+}
+
+inline void Inotify::setEventMask(uint32_t eventMask){
+  mEventMask = eventMask;
 }
 
 /**

@@ -1,6 +1,12 @@
-#include <Inotify.h>
-#include <FileSystemEvent.h>
+#include <inotify/Inotify.h>
+#include <inotify/FileSystemEvent.h>
+#include <inotify/NotifierBuilder.h>
+
 #include <boost/filesystem.hpp>
+
+#include <iostream>
+
+
 
 int main(int argc, char** argv){
   if(argc <= 1){
@@ -25,6 +31,6 @@ int main(int argc, char** argv){
     FileSystemEvent event = inotify.getNextEvent();
     std::cout << "Event wd(" << event.wd << ") " << event.mask << "for " << event.path << " was triggered!" << std::endl;
   }
-  
+
   return 0;
 }
