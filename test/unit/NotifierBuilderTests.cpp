@@ -25,7 +25,8 @@ BOOST_AUTO_TEST_CASE(shouldNotAcceptNotExistingPaths)
 BOOST_AUTO_TEST_CASE(shouldNotifyOnOpenEvent)
 {
     auto timeout = std::chrono::seconds(100);
-    auto file = boost::filesystem::path("/home/erik/projects/Inotify/test/assets/test.txt");
+    boost::filesystem::path cwd(__FILE__);
+    auto file = boost::filesystem::canonical("./../assets/test.txt", cwd.parent_path());
     std::promise<Event> promisedOpenEvent;
     auto futureOpenEvent = promisedOpenEvent.get_future();
 
