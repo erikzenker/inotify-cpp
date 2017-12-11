@@ -89,6 +89,7 @@ namespace inofity {
             default:
                 throw std::runtime_error("Unknown inotify event");
         }
+        return stream;
     }
 
     using EventObserver = std::function<void(Notification)>;

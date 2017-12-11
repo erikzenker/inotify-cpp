@@ -1,6 +1,7 @@
 #include <inotify/NotifierBuilder.h>
 
 #include <boost/test/unit_test.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 #include <iostream>
 #include <future>
@@ -17,7 +18,7 @@ void openFile(boost::filesystem::path file){
 
 struct NotifierBuilderTests {
   NotifierBuilderTests() : testFile_("test.txt"), timeout_(1) {
-    boost::filesystem::ofstream ofstream{testFile_};
+    boost::filesystem::ofstream stream(testFile_);
 
   }
   ~NotifierBuilderTests() = default;
