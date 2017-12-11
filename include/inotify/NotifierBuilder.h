@@ -16,13 +16,12 @@
 
 namespace inofity {
 
-
-
     enum class Event {
         access = IN_ACCESS,
         attrib = IN_ATTRIB,
         close_write = IN_CLOSE_WRITE,
         close_nowrite = IN_CLOSE_NOWRITE,
+        close = IN_CLOSE,
         create = IN_CREATE,
         remove = IN_DELETE,
         remove_self = IN_DELETE_SELF,
@@ -32,11 +31,67 @@ namespace inofity {
         moved_to = IN_MOVED_TO,
         move = IN_MOVE,
         open = IN_OPEN,
-        all = IN_ALL_EVENTS,
-        close = IN_CLOSE
+        all = IN_ALL_EVENTS
     };
 
-    using EventObserver = std::function<void(Event)>;
+    struct Notification {
+        Event event;
+        boost::filesystem::path path;
+    };
+
+    std::ostream& operator <<(std::ostream& stream, const Event& event) {
+        switch(event){
+            case Event::access:
+                stream << "access(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::attrib:
+                stream << "attrib(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::close_write:
+                stream << "close_write(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::close_nowrite:
+                stream << "close_nowrite(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::create:
+                stream << "close_nowrite(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::remove:
+                stream << "remove(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::remove_self:
+                stream << "remove_self(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::close:
+                stream << "close(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::modify:
+                stream << "modify(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::move_self:
+                stream << "move_self(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::moved_from:
+                stream << "moved_from(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::moved_to:
+                stream << "moved_to(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::move:
+                stream << "move(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::open:
+                stream << "open(" << static_cast<uint32_t >(event) << ")";
+                break;
+            case Event::all:
+                stream << "all(" << static_cast<uint32_t >(event) << ")";
+                break;
+            default:
+                throw std::runtime_error("Unknown inotify event");
+        }
+    }
+
+    using EventObserver = std::function<void(Notification)>;
 
     class NotifierBuilder {
     public:
@@ -46,11 +101,11 @@ namespace inofity {
 
         auto run() -> void;
         auto run_once() -> void;
-        auto notifyOn(std::vector<Event> events) -> NotifierBuilder&;
         auto watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&;
         auto watchFile(boost::filesystem::path file) -> NotifierBuilder&;
         auto ignoreFileOnce(std::string fileName) -> NotifierBuilder&;
-        auto onEvent(Event event, std::function<void(Event)>) -> NotifierBuilder&;
+        auto onEvent(Event event, EventObserver) -> NotifierBuilder&;
+        auto onEvents(std::vector<Event> event, EventObserver) -> NotifierBuilder&;
 
     private:
         std::shared_ptr<Inotify> mInotify;
@@ -58,17 +113,6 @@ namespace inofity {
     };
 
     NotifierBuilder BuildNotifier() { return {};};
-
-    auto NotifierBuilder::notifyOn(std::vector<Event> events) -> NotifierBuilder&
-    {
-        std::uint32_t eventMask(0);
-        for(auto event : events){
-            eventMask = eventMask | static_cast<std::uint32_t>(event);
-        }
-
-        mInotify->setEventMask(eventMask);
-        return *this;
-    }
 
     auto NotifierBuilder::watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&
     {
@@ -90,22 +134,37 @@ namespace inofity {
 
     auto NotifierBuilder::onEvent(Event event, EventObserver eventObserver) -> NotifierBuilder&
     {
-        mEventObserver[event] = eventObserver;
+      mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
+      mEventObserver[event] = eventObserver;
+      return *this;
+    }
+
+    auto NotifierBuilder::onEvents(std::vector<Event> events, EventObserver eventObserver) -> NotifierBuilder&
+    {
+        for(auto event : events){
+            mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
+            mEventObserver[event] = eventObserver;
+        }
+
         return *this;
     }
 
     auto NotifierBuilder::run_once() -> void
     {
-        auto mask = mInotify->getNextEvent().mask;
-        Event event = static_cast<Event>(mask);
+        auto fileSystemEvent = mInotify->getNextEvent();
+        Event event = static_cast<Event>(fileSystemEvent.mask);
 
         auto eventAndEventObserver = mEventObserver.find(event);
         if (eventAndEventObserver == mEventObserver.end()) {
             return;
         }
 
+        Notification notification;
+        notification.event = event;
+        notification.path = fileSystemEvent.path;
+
         auto eventObserver = eventAndEventObserver->second;
-        eventObserver(event);
+        eventObserver(notification);
     }
 
 

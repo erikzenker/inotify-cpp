@@ -78,6 +78,7 @@ class Inotify {
   void watchFile(fs::path file);
   void ignoreFileOnce(fs::path file);
   void setEventMask(uint32_t eventMask);
+  uint32_t getEventMask();
   FileSystemEvent getNextEvent();
   int getLastErrno();
   
@@ -263,6 +264,10 @@ inline fs::path Inotify::wdToPath(int wd){
 
 inline void Inotify::setEventMask(uint32_t eventMask){
   mEventMask = eventMask;
+}
+
+inline uint32_t Inotify::getEventMask(){
+  return mEventMask;
 }
 
 /**

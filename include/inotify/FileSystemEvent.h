@@ -25,7 +25,6 @@ class FileSystemEvent {
   std::string getMaskString() const;
 
   /* Member */
-  bool isRecursive;
   int wd;
   uint32_t mask;
   boost::filesystem::path path;
@@ -37,7 +36,6 @@ class FileSystemEvent {
 
 
 inline FileSystemEvent::FileSystemEvent(const int wd, uint32_t mask, const boost::filesystem::path path) :
-  isRecursive(false),
   wd(wd),
   mask(mask),
   path(path){
