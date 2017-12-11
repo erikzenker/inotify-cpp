@@ -1,0 +1,24 @@
+language: cpp
+dist: trusty
+addons:
+  apt:
+    sources:
+    - llvm-toolchain-trusty-5.0
+
+    packages:
+    - cmake
+    - libboost-filesystem-dev
+    - libboost-test-dev
+    - clang-5.0
+compiler:
+- clang
+os:
+- linux
+script:
+- export CXX=clang++-5.0
+- export CC=clang-5.0
+- mkdir build && cd build
+- cmake ..
+- cmake --build .
+- ./test/unit/inotify_unit_test
+
