@@ -11,6 +11,9 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 ###############################################################################
 find_package (Threads)
 
+IF(${INOTIFY_COVERAGE})
+    SET(CMAKE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
+ENDIF()
 
 add_executable (inotify_unit_test main.cpp NotifierBuilderTests.cpp)
 target_link_libraries (inotify_unit_test LINK_PUBLIC

@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.2.2)
-project (Inotify)
+CMAKE_MINIMUM_REQUIRED (VERSION 3.2.2)
+PROJECT (Inotify)
 
-set (CMAKE_CXX_STANDARD 11)
+SET (CMAKE_CXX_STANDARD 11)
 
-add_subdirectory (test)
-add_subdirectory (example)
 
-add_library (Inotify INTERFACE)
-target_include_directories (Inotify INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ADD_SUBDIRECTORY (test)
+ADD_SUBDIRECTORY (example)
+
+ADD_LIBRARY (Inotify INTERFACE)
+TARGET_INCLUDE_DIRECTORIES (Inotify INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
