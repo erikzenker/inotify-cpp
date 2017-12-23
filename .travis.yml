@@ -2,27 +2,21 @@ language: cpp
 dist: trusty
 addons:
   apt:
-    sources:
-    - llvm-toolchain-trusty-5.0
-
     packages:
     - cmake
     - libboost-filesystem-dev
     - libboost-test-dev
-    - clang-5.0
 compiler:
-- clang
+- gcc
 os:
 - linux
 script:
-- export CXX=clang++-5.0
-- export CC=clang-5.0
+- export CXX=g++
+- export CC=gcc
+- export CODECOV_TOKEN="c3d08772-6107-422c-886f-ada5c4780d5c"
 - mkdir build && cd build
-- export LLVM_PROFILE_FILE=coverage.profraw
-- cmake .. -DINOTIFY_COVERAGE=1
+- cmake .. -DINOTIFY_GCC_COVERAGE=1
 - cmake --build .
 - ./test/unit/inotify_unit_test
-- llvm-profdata merge -sparse coverage.profraw -o coverage.profdata
-- llvm-cov show ./test/unit/inotify_unit_test -instr-profile=coverage.profdata
-- llvm-cov report ./test/unit/inotify_unit_test -instr-profile=coverage.profdata
+- bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
 
