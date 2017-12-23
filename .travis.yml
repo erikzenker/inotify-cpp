@@ -2,16 +2,12 @@ language: cpp
 dist: trusty
 addons:
   apt:
-    sources:
-    - llvm-toolchain-trusty-5.0
-
     packages:
     - cmake
     - libboost-filesystem-dev
     - libboost-test-dev
-    - clang-5.0
 compiler:
-- clang
+- gcc
 os:
 - linux
 script:
@@ -22,5 +18,5 @@ script:
 - cmake .. -DINOTIFY_GCC_COVERAGE=1
 - cmake --build .
 - ./test/unit/inotify_unit_test
-- bash <(curl -s https://codecov.io/bash)
+- bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
 
