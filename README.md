@@ -1,4 +1,4 @@
-Inotify-cpp [![Build Status](https://travis-ci.org/erikzenker/inotify-cpp.svg?branch=master)](https://travis-ci.org/erikzenker/inotify-cpp)
+Inotify-cpp [![Build Status](https://travis-ci.org/erikzenker/inotify-cpp.svg?branch=master)](https://travis-ci.org/erikzenker/inotify-cpp) [![Coverity Scan Build Status](https://scan.coverity.com/projects/14692/badge.svg)](https://scan.coverity.com/projects/erikzenker-inotify-cpp)
 ===========
 
 __Inotify-cpp__ is a C++ wrapper for the linux inotify tool. It lets you watch for 
