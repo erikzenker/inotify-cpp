@@ -88,3 +88,42 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnMultipleEvents, NotifierBuilderTests)
     BOOST_CHECK(futureCloseNoWrite.get().event == Event::close_nowrite);
     thread.join();
 }
+
+BOOST_FIXTURE_TEST_CASE(shouldStopRunOnce, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier().watchFile(testFile_);
+
+    std::thread thread([&notifier]() { notifier.run_once(); });
+
+    notifier.stop();
+
+    thread.join();
+}
+
+BOOST_FIXTURE_TEST_CASE(shouldStopRun, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier().watchFile(testFile_);
+
+    std::thread thread([&notifier]() { notifier.run(); });
+
+    notifier.stop();
+
+    thread.join();
+}
+
+BOOST_FIXTURE_TEST_CASE(shouldIgnoreFileOnce, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier().watchFile(testFile_).ignoreFileOnce(testFile_).onEvent(
+        Event::open, [&](Notification notification) { promisedOpen_.set_value(notification); });
+
+    std::thread thread([&notifier]() { notifier.run_once(); });
+
+    openFile(testFile_);
+
+    auto futureOpen = promisedOpen_.get_future();
+    auto futureCloseNoWrite = promisedCloseNoWrite_.get_future();
+    BOOST_CHECK(futureOpen.wait_for(timeout_) != std::future_status::ready);
+
+    notifier.stop();
+    thread.join();
+}

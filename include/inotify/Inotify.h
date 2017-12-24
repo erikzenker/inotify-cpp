@@ -5,22 +5,19 @@
  * @copyright MIT
  **/
 #pragma once
-#include <sys/inotify.h>
-#include <string>
-#include <queue>
-#include <map>
-#include <vector>
-#include <boost/filesystem.hpp>
 #include <assert.h>
-#include <errno.h>
-#include <time.h>
-#include <errno.h>
-#include <string>
-#include <exception>
-#include <sstream>
-#include <memory>
 #include <boost/filesystem.hpp>
-
+#include <boost/optional.hpp>
+#include <errno.h>
+#include <exception>
+#include <map>
+#include <memory>
+#include <queue>
+#include <sstream>
+#include <string>
+#include <sys/inotify.h>
+#include <time.h>
+#include <vector>
 
 #include <inotify/FileSystemEvent.h>
 
@@ -79,10 +76,11 @@ class Inotify {
   void ignoreFileOnce(fs::path file);
   void setEventMask(uint32_t eventMask);
   uint32_t getEventMask();
-  FileSystemEvent getNextEvent();
+  boost::optional<FileSystemEvent> getNextEvent();
   int getLastErrno();
-  
- private:
+  void stop();
+
+private:
   fs::path wdToPath(int wd);
   bool isIgnored(std::string file);
   bool onTimeout(time_t eventTime);
@@ -99,8 +97,7 @@ class Inotify {
   std::queue<FileSystemEvent> mEventQueue;
   std::map<int, fs::path> mDirectorieMap;
   int mInotifyFd;
-
-
+  bool stopped;
 };
 
 
@@ -148,12 +145,13 @@ inline Inotify::~Inotify(){
 }
 
 inline void Inotify::init(){
-  mInotifyFd = inotify_init();
-  if(mInotifyFd == -1){
-    mError = errno;
-    std::stringstream errorStream;
-    errorStream << "Can't initialize inotify ! " << strerror(mError) << ".";
-    throw std::runtime_error(errorStream.str());
+    stopped = false;
+    mInotifyFd = inotify_init1(IN_NONBLOCK);
+    if (mInotifyFd == -1) {
+        mError = errno;
+        std::stringstream errorStream;
+        errorStream << "Can't initialize inotify ! " << strerror(mError) << ".";
+        throw std::runtime_error(errorStream.str());
   }
 
 }
@@ -280,83 +278,83 @@ inline uint32_t Inotify::getEventMask(){
  * @return A new FileSystemEvent
  *
  */
-inline FileSystemEvent Inotify::getNextEvent(){
-  int length = 0;
-  char buffer[EVENT_BUF_LEN];
-  time_t currentEventTime = time(NULL);
-  std::vector<FileSystemEvent> events;
+inline boost::optional<FileSystemEvent> Inotify::getNextEvent()
+{
+    int length = 0;
+    char buffer[EVENT_BUF_LEN];
+    time_t currentEventTime = time(NULL);
+    std::vector<FileSystemEvent> events;
 
-  // Read Events from fd into buffer
-  while(mEventQueue.empty()){
-    length = 0;
-    memset(&buffer, 0, EVENT_BUF_LEN);
-    while(length <= 0 ){
-      length = read(mInotifyFd, buffer, EVENT_BUF_LEN);
-      currentEventTime = time(NULL);
-      if(length == -1){
-	mError = errno;
-	if(mError != EINTR){
-	  continue;
+    // Read Events from fd into buffer
+    while (mEventQueue.empty()) {
+        length = 0;
+        memset(&buffer, 0, EVENT_BUF_LEN);
+        while (length <= 0 && !stopped) {
+            length = read(mInotifyFd, buffer, EVENT_BUF_LEN);
+            currentEventTime = time(NULL);
+            if (length == -1) {
+                mError = errno;
+                if (mError != EINTR) {
+                    continue;
+                }
+            }
+        }
 
-	}
+        if (stopped) {
+            return boost::none;
+        }
 
-      }
+        // Read events from buffer into queue
+        currentEventTime = time(NULL);
+        int i = 0;
+        while (i < length) {
+            inotify_event* event = ((struct inotify_event*)&buffer[i]);
+            fs::path path(wdToPath(event->wd) / std::string(event->name));
+            if (fs::is_directory(path)) {
+                event->mask |= IN_ISDIR;
+            }
+            FileSystemEvent fsEvent(event->wd, event->mask, path);
 
+            if (!fsEvent.path.empty()) {
+                events.push_back(fsEvent);
+
+            } else {
+                // Event is not complete --> ignore
+            }
+
+            i += EVENT_SIZE + event->len;
+        }
+
+        // Filter events
+        for (auto eventIt = events.begin(); eventIt < events.end(); ++eventIt) {
+            FileSystemEvent currentEvent = *eventIt;
+            if (onTimeout(currentEventTime)) {
+                events.erase(eventIt);
+
+            } else if (isIgnored(currentEvent.path.string())) {
+                events.erase(eventIt);
+            } else {
+                mLastEventTime = currentEventTime;
+                mEventQueue.push(currentEvent);
+            }
+        }
     }
 
-    // Read events from buffer into queue
-    currentEventTime = time(NULL);
-    int i = 0;
-    while(i < length){
-      inotify_event *event = ((struct inotify_event*) &buffer[i]);
-      fs::path path(wdToPath(event->wd) / std::string(event->name));
-      if(fs::is_directory(path)){
-	event->mask |= IN_ISDIR;
-      }
-      FileSystemEvent fsEvent(event->wd, event->mask, path);
-
-      if(!fsEvent.path.empty()){
-	events.push_back(fsEvent);
-	
-      }
-      else{
-	// Event is not complete --> ignore
-      }
-
-      i += EVENT_SIZE + event->len;
-
-    }
-    
-
-    // Filter events
-    for(auto eventIt = events.begin(); eventIt < events.end(); ++eventIt){
-      FileSystemEvent currentEvent = *eventIt;
-      if(onTimeout(currentEventTime)){
-	events.erase(eventIt);
-    
-      }
-      else if(isIgnored(currentEvent.path.string())){
-      	events.erase(eventIt);
-      }
-      else{
-	mLastEventTime = currentEventTime;
-	mEventQueue.push(currentEvent);
-      }
-
-    }
-
-  }
-
-  // Return next event
-  FileSystemEvent event = mEventQueue.front();
-  mEventQueue.pop();
-  return event;
+    // Return next event
+    FileSystemEvent event = mEventQueue.front();
+    mEventQueue.pop();
+    return event;
 
 }
 
 inline int Inotify::getLastErrno(){
   return mError;
 
+}
+
+inline void Inotify::stop()
+{
+    stopped = true;
 }
 
 inline bool Inotify::isIgnored(std::string file){
