@@ -10,169 +10,185 @@
 
 #include <boost/filesystem.hpp>
 
-#include <string>
 #include <memory>
-
+#include <string>
 
 namespace inofity {
 
-    enum class Event {
-        access = IN_ACCESS,
-        attrib = IN_ATTRIB,
-        close_write = IN_CLOSE_WRITE,
-        close_nowrite = IN_CLOSE_NOWRITE,
-        close = IN_CLOSE,
-        create = IN_CREATE,
-        remove = IN_DELETE,
-        remove_self = IN_DELETE_SELF,
-        modify = IN_MODIFY,
-        move_self = IN_MOVE_SELF,
-        moved_from = IN_MOVED_FROM,
-        moved_to = IN_MOVED_TO,
-        move = IN_MOVE,
-        open = IN_OPEN,
-        all = IN_ALL_EVENTS
-    };
+enum class Event {
+    access = IN_ACCESS,
+    attrib = IN_ATTRIB,
+    close_write = IN_CLOSE_WRITE,
+    close_nowrite = IN_CLOSE_NOWRITE,
+    close = IN_CLOSE,
+    create = IN_CREATE,
+    remove = IN_DELETE,
+    remove_self = IN_DELETE_SELF,
+    modify = IN_MODIFY,
+    move_self = IN_MOVE_SELF,
+    moved_from = IN_MOVED_FROM,
+    moved_to = IN_MOVED_TO,
+    move = IN_MOVE,
+    open = IN_OPEN,
+    all = IN_ALL_EVENTS
+};
 
-    struct Notification {
-        Event event;
-        boost::filesystem::path path;
-    };
+struct Notification {
+    Event event;
+    boost::filesystem::path path;
+};
 
-    std::ostream& operator <<(std::ostream& stream, const Event& event) {
-        switch(event){
-            case Event::access:
-                stream << "access(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::attrib:
-                stream << "attrib(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::close_write:
-                stream << "close_write(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::close_nowrite:
-                stream << "close_nowrite(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::create:
-                stream << "close_nowrite(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::remove:
-                stream << "remove(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::remove_self:
-                stream << "remove_self(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::close:
-                stream << "close(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::modify:
-                stream << "modify(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::move_self:
-                stream << "move_self(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::moved_from:
-                stream << "moved_from(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::moved_to:
-                stream << "moved_to(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::move:
-                stream << "move(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::open:
-                stream << "open(" << static_cast<uint32_t >(event) << ")";
-                break;
-            case Event::all:
-                stream << "all(" << static_cast<uint32_t >(event) << ")";
-                break;
-            default:
-                throw std::runtime_error("Unknown inotify event");
-        }
-        return stream;
+std::ostream& operator<<(std::ostream& stream, const Event& event)
+{
+    switch (event) {
+    case Event::access:
+        stream << "access(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::attrib:
+        stream << "attrib(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::close_write:
+        stream << "close_write(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::close_nowrite:
+        stream << "close_nowrite(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::create:
+        stream << "close_nowrite(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::remove:
+        stream << "remove(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::remove_self:
+        stream << "remove_self(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::close:
+        stream << "close(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::modify:
+        stream << "modify(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::move_self:
+        stream << "move_self(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::moved_from:
+        stream << "moved_from(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::moved_to:
+        stream << "moved_to(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::move:
+        stream << "move(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::open:
+        stream << "open(" << static_cast<uint32_t>(event) << ")";
+        break;
+    case Event::all:
+        stream << "all(" << static_cast<uint32_t>(event) << ")";
+        break;
+    default:
+        throw std::runtime_error("Unknown inotify event");
+    }
+    return stream;
+}
+
+using EventObserver = std::function<void(Notification)>;
+
+class NotifierBuilder {
+  public:
+    NotifierBuilder()
+        : mInotify(std::make_shared<Inotify>())
+    {
     }
 
-    using EventObserver = std::function<void(Notification)>;
+    auto run() -> void;
+    auto run_once() -> bool;
+    auto stop() -> void;
+    auto watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&;
+    auto watchFile(boost::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFileOnce(boost::filesystem::path file) -> NotifierBuilder&;
+    auto onEvent(Event event, EventObserver) -> NotifierBuilder&;
+    auto onEvents(std::vector<Event> event, EventObserver) -> NotifierBuilder&;
 
-    class NotifierBuilder {
-    public:
-        NotifierBuilder() : mInotify(std::make_shared<Inotify>())
-        {
-        }
+  private:
+    std::shared_ptr<Inotify> mInotify;
+    std::map<Event, EventObserver> mEventObserver;
+};
 
-        auto run() -> void;
-        auto run_once() -> void;
-        auto watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&;
-        auto watchFile(boost::filesystem::path file) -> NotifierBuilder&;
-        auto ignoreFileOnce(std::string fileName) -> NotifierBuilder&;
-        auto onEvent(Event event, EventObserver) -> NotifierBuilder&;
-        auto onEvents(std::vector<Event> event, EventObserver) -> NotifierBuilder&;
+NotifierBuilder BuildNotifier()
+{
+    return {};
+};
 
-    private:
-        std::shared_ptr<Inotify> mInotify;
-        std::map<Event, EventObserver> mEventObserver;
-    };
+auto NotifierBuilder::watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&
+{
+    mInotify->watchDirectoryRecursively(path);
+    return *this;
+}
 
-    NotifierBuilder BuildNotifier() { return {};};
+auto NotifierBuilder::watchFile(boost::filesystem::path file) -> NotifierBuilder&
+{
+    mInotify->watchFile(file);
+    return *this;
+}
 
-    auto NotifierBuilder::watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&
-    {
-        mInotify->watchDirectoryRecursively(path);
-        return *this;
+auto NotifierBuilder::ignoreFileOnce(boost::filesystem::path file) -> NotifierBuilder&
+{
+    mInotify->ignoreFileOnce(file.string());
+    return *this;
+}
+
+auto NotifierBuilder::onEvent(Event event, EventObserver eventObserver) -> NotifierBuilder&
+{
+    mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
+    mEventObserver[event] = eventObserver;
+    return *this;
+}
+
+auto NotifierBuilder::onEvents(std::vector<Event> events, EventObserver eventObserver)
+    -> NotifierBuilder&
+{
+    for (auto event : events) {
+        mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
+        mEventObserver[event] = eventObserver;
     }
 
-    auto NotifierBuilder::watchFile(boost::filesystem::path file) -> NotifierBuilder&
-    {
-        mInotify->watchFile(file);
-        return *this;
+    return *this;
+}
+
+auto NotifierBuilder::run_once() -> bool
+{
+    auto fileSystemEvent = mInotify->getNextEvent();
+    if (!fileSystemEvent) {
+        return false;
     }
 
-    auto NotifierBuilder::ignoreFileOnce(std::string fileName) -> NotifierBuilder&
-    {
-        mInotify->ignoreFileOnce(fileName);
-        return *this;
+    Event event = static_cast<Event>(fileSystemEvent->mask);
+
+    auto eventAndEventObserver = mEventObserver.find(event);
+    if (eventAndEventObserver == mEventObserver.end()) {
+        return true;
     }
 
-    auto NotifierBuilder::onEvent(Event event, EventObserver eventObserver) -> NotifierBuilder&
-    {
-      mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
-      mEventObserver[event] = eventObserver;
-      return *this;
-    }
+    Notification notification;
+    notification.event = event;
+    notification.path = fileSystemEvent->path;
 
-    auto NotifierBuilder::onEvents(std::vector<Event> events, EventObserver eventObserver) -> NotifierBuilder&
-    {
-        for(auto event : events){
-            mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
-            mEventObserver[event] = eventObserver;
-        }
+    auto eventObserver = eventAndEventObserver->second;
+    eventObserver(notification);
+}
 
-        return *this;
-    }
-
-    auto NotifierBuilder::run_once() -> void
-    {
-        auto fileSystemEvent = mInotify->getNextEvent();
-        Event event = static_cast<Event>(fileSystemEvent.mask);
-
-        auto eventAndEventObserver = mEventObserver.find(event);
-        if (eventAndEventObserver == mEventObserver.end()) {
+auto NotifierBuilder::run() -> void
+{
+    while (true) {
+        if (!run_once()) {
             return;
         }
-
-        Notification notification;
-        notification.event = event;
-        notification.path = fileSystemEvent.path;
-
-        auto eventObserver = eventAndEventObserver->second;
-        eventObserver(notification);
     }
+}
 
-
-    auto NotifierBuilder::run() -> void
-    {
-        while(true) {
-            run_once();
-        }
-    }
+auto NotifierBuilder::stop() -> void
+{
+    mInotify->stop();
+}
 }
