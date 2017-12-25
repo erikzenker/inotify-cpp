@@ -156,3 +156,29 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
     notifier.stop();
     thread.join();
 }
+
+BOOST_FIXTURE_TEST_CASE(shouldThrowOnUnexpectedEvent, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier().watchFile(testFile_);
+
+    std::thread thread(
+        [&notifier]() { BOOST_CHECK_THROW(notifier.run_once(), std::runtime_error); });
+
+    openFile(testFile_);
+    thread.join();
+}
+
+BOOST_FIXTURE_TEST_CASE(shouldCallUserDefinedUnexpectedExceptionObserver, NotifierBuilderTests)
+{
+    std::promise<void> observerCalled;
+
+    auto notifier = BuildNotifier().watchFile(testFile_).onUnexpectedEvent(
+        [&observerCalled](Notification) { observerCalled.set_value(); });
+
+    std::thread thread([&notifier]() { notifier.run_once(); });
+
+    openFile(testFile_);
+
+    BOOST_CHECK(observerCalled.get_future().wait_for(timeout_) == std::future_status::ready);
+    thread.join();
+}
