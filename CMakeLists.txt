@@ -3,6 +3,14 @@ PROJECT (Inotify)
 
 SET (CMAKE_CXX_STANDARD 11)
 
+IF(${INOTIFY_CLANG_COVERAGE})
+    SET(CMAKE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
+ENDIF()
+
+IF(${INOTIFY_GCC_COVERAGE})
+    SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+ENDIF()
+
 ADD_SUBDIRECTORY (test)
 ADD_SUBDIRECTORY (example)
 ADD_SUBDIRECTORY (source)
