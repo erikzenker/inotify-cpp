@@ -20,7 +20,8 @@ IF(${INOTIFY_GCC_COVERAGE})
 ENDIF()
 
 add_executable (inotify_unit_test main.cpp NotifierBuilderTests.cpp)
-target_link_libraries (inotify_unit_test LINK_PUBLIC
-        Inotify
-        ${Boost_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries (inotify_unit_test
+  PUBLIC
+    Inotify
+    ${Boost_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT})
