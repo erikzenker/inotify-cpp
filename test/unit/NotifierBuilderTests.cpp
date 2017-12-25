@@ -7,7 +7,7 @@
 #include <future>
 #include <iostream>
 
-using namespace inofity;
+using namespace inotify;
 
 void openFile(boost::filesystem::path file)
 {
@@ -50,7 +50,7 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnOpenEvent, NotifierBuilderTests)
     auto notifier = BuildNotifier().watchFile(testFile_).onEvent(
         Event::open, [&](Notification notification) { promisedOpen_.set_value(notification); });
 
-    std::thread thread([&notifier]() { notifier.run_once(); });
+    std::thread thread([&notifier]() { notifier.runOnce(); });
 
     openFile(testFile_);
 
@@ -71,14 +71,12 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnMultipleEvents, NotifierBuilderTests)
             case Event::close_nowrite:
                 promisedCloseNoWrite_.set_value(notification);
                 break;
-            default:
-                BOOST_FAIL("Unexpected event");
             }
         });
 
     std::thread thread([&notifier]() {
-        notifier.run_once();
-        notifier.run_once();
+        notifier.runOnce();
+        notifier.runOnce();
     });
 
     openFile(testFile_);
@@ -96,7 +94,7 @@ BOOST_FIXTURE_TEST_CASE(shouldStopRunOnce, NotifierBuilderTests)
 {
     auto notifier = BuildNotifier().watchFile(testFile_);
 
-    std::thread thread([&notifier]() { notifier.run_once(); });
+    std::thread thread([&notifier]() { notifier.runOnce(); });
 
     notifier.stop();
 
@@ -119,7 +117,7 @@ BOOST_FIXTURE_TEST_CASE(shouldIgnoreFileOnce, NotifierBuilderTests)
     auto notifier = BuildNotifier().watchFile(testFile_).ignoreFileOnce(testFile_).onEvent(
         Event::open, [&](Notification notification) { promisedOpen_.set_value(notification); });
 
-    std::thread thread([&notifier]() { notifier.run_once(); });
+    std::thread thread([&notifier]() { notifier.runOnce(); });
 
     openFile(testFile_);
 
@@ -140,13 +138,11 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
                             case Event::open:
                                 promisedOpen_.set_value(notification);
                                 break;
-                            default:
-                                BOOST_FAIL("Unexpected event");
                             }
 
                         });
 
-    std::thread thread([&notifier]() { notifier.run_once(); });
+    std::thread thread([&notifier]() { notifier.runOnce(); });
 
     openFile(testFile_);
 
@@ -162,7 +158,7 @@ BOOST_FIXTURE_TEST_CASE(shouldThrowOnUnexpectedEvent, NotifierBuilderTests)
     auto notifier = BuildNotifier().watchFile(testFile_);
 
     std::thread thread(
-        [&notifier]() { BOOST_CHECK_THROW(notifier.run_once(), std::runtime_error); });
+        [&notifier]() { BOOST_CHECK_THROW(notifier.runOnce(), std::runtime_error); });
 
     openFile(testFile_);
     thread.join();
@@ -175,7 +171,7 @@ BOOST_FIXTURE_TEST_CASE(shouldCallUserDefinedUnexpectedExceptionObserver, Notifi
     auto notifier = BuildNotifier().watchFile(testFile_).onUnexpectedEvent(
         [&observerCalled](Notification) { observerCalled.set_value(); });
 
-    std::thread thread([&notifier]() { notifier.run_once(); });
+    std::thread thread([&notifier]() { notifier.runOnce(); });
 
     openFile(testFile_);
 
