@@ -10,14 +10,9 @@ class FileSystemEvent {
 
     ~FileSystemEvent();
 
-    std::string getMaskString() const;
-
-    /* Member */
+  public: // Member
     int wd;
     uint32_t mask;
     boost::filesystem::path path;
-
-  private:
-    std::string maskToString(uint32_t events) const;
 };
 }
