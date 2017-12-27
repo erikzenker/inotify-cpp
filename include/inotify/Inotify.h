@@ -1,4 +1,4 @@
-/** 
+/**
  * @file      Inotify.h
  * @author    Erik Zenker
  * @date      20.11.2017
@@ -18,6 +18,8 @@
 #include <sys/inotify.h>
 #include <time.h>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 #include <inotify/FileSystemEvent.h>
 
@@ -26,7 +28,6 @@
 #define EVENT_BUF_LEN  (MAX_EVENTS * (EVENT_SIZE + 16))
 
 namespace fs = boost::filesystem;
-
 
 /**
  * @brief C++ wrapper for linux inotify interface
@@ -94,6 +95,7 @@ private:
   time_t mEventTimeout;
   time_t mLastEventTime;
   uint32_t mEventMask;
+  uint32_t mThreadSleep;
   std::vector<std::string> mIgnoredDirectories;
   std::vector<std::string> mOnceIgnoredDirectories;
   std::queue<FileSystemEvent> mEventQueue;
