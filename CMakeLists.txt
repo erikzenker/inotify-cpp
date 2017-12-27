@@ -3,6 +3,8 @@ PROJECT (Inotify)
 
 SET (CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -g3 -O0")
+
 IF(${INOTIFY_CLANG_COVERAGE})
     SET(CMAKE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
 ENDIF()
