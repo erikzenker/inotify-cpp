@@ -12,6 +12,7 @@ Inotify::Inotify()
     , mEventMask(IN_ALL_EVENTS)
     , mIgnoredDirectories(std::vector<std::string>())
     , mInotifyFd(0)
+    , mThreadSleep(250)
 {
 
     // Initialize inotify
@@ -25,6 +26,7 @@ Inotify::Inotify(uint32_t eventMask)
     , mEventMask(eventMask)
     , mIgnoredDirectories(std::vector<std::string>())
     , mInotifyFd(0)
+    , mThreadSleep(250)
 {
 
     // Initialize inotify
@@ -39,6 +41,7 @@ Inotify::Inotify(
     , mEventMask(eventMask)
     , mIgnoredDirectories(ignoredDirectories)
     , mInotifyFd(0)
+    , mThreadSleep(250)
 {
 
     // Initialize inotify
@@ -199,6 +202,8 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
         length = 0;
         memset(&buffer, 0, EVENT_BUF_LEN);
         while (length <= 0 && !stopped) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(mThreadSleep));
+
             length = read(mInotifyFd, buffer, EVENT_BUF_LEN);
             currentEventTime = time(NULL);
             if (length == -1) {
