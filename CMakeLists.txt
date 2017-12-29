@@ -1,18 +1,32 @@
-CMAKE_MINIMUM_REQUIRED (VERSION 3.2.2)
-PROJECT (Inotify)
+cmake_minimum_required(VERSION 3.2.2)
+project(inotify-cpp)
 
-SET (CMAKE_CXX_STANDARD 11)
+enable_testing()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -g3 -O0")
+set(CMAKE_CXX_STANDARD 11)
 
-IF(${INOTIFY_CLANG_COVERAGE})
-    SET(CMAKE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
-ENDIF()
+set(
+  CMAKE_CXX_FLAGS_DEBUG
+  "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -g3 -O0"
+)
 
-IF(${INOTIFY_GCC_COVERAGE})
-    SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
-ENDIF()
+###############################################################################
+# Boost
+###############################################################################
+find_package(
+  Boost 1.54.0
+  COMPONENTS system filesystem unit_test_framework
+  REQUIRED
+)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-ADD_SUBDIRECTORY (test)
-ADD_SUBDIRECTORY (example)
-ADD_SUBDIRECTORY (source)
+if(${INOTIFY_CLANG_COVERAGE})
+    set(CMAKE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
+endif()
+
+if(${INOTIFY_GCC_COVERAGE})
+    set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+endif()
+
+add_subdirectory(source)
+add_subdirectory(test)
