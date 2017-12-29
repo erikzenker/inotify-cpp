@@ -5,3 +5,5 @@ CMakeCache.txt
 example/inotify_example
 source/libinotify-cpp.a
 test/unit/inotify_unit_test
+Testing/
+test/unit/testDirectory/
