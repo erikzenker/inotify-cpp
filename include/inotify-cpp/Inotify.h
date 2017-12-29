@@ -21,7 +21,7 @@
 #include <chrono>
 #include <thread>
 
-#include <inotify/FileSystemEvent.h>
+#include <inotify-cpp/FileSystemEvent.h>
 
 #define MAX_EVENTS     4096
 #define EVENT_SIZE     (sizeof (inotify_event))

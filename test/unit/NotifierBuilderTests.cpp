@@ -1,4 +1,4 @@
-#include <inotify/NotifierBuilder.h>
+#include <inotify-cpp/NotifierBuilder.h>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>

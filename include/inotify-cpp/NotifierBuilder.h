@@ -1,7 +1,7 @@
 #pragma once
 
-#include <inotify/Inotify.h>
-#include <inotify/Notification.h>
+#include <inotify-cpp/Inotify.h>
+#include <inotify-cpp/Notification.h>
 
 #include <boost/filesystem.hpp>
 

@@ -1,4 +1,4 @@
-#include <inotify/Event.h>
+#include <inotify-cpp/Event.h>
 
 #include <cstdint>
 #include <iostream>
