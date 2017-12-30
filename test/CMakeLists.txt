@@ -1,3 +1,3 @@
-project (InotifyTest)
+project(InotifyTest)
 
 add_subdirectory(unit)

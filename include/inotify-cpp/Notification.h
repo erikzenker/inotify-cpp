@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inotify/Event.h>
+#include <inotify-cpp/Event.h>
 
 #include <boost/filesystem.hpp>
 

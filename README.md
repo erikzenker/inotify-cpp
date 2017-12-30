@@ -2,14 +2,14 @@ Inotify-cpp
 [![Build Status](https://travis-ci.org/erikzenker/inotify-cpp.svg?branch=master)](https://travis-ci.org/erikzenker/inotify-cpp) [![Coverity Scan Build Status](https://scan.coverity.com/projects/14692/badge.svg)](https://scan.coverity.com/projects/erikzenker-inotify-cpp) [![codecov](https://codecov.io/gh/erikzenker/inotify-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/erikzenker/inotify-cpp)
 ===========
 
-__Inotify-cpp__ is a C++ wrapper for the linux inotify tool. It lets you watch for 
-filesystem events on your filesystem tree. 
+__Inotify-cpp__ is a C++ wrapper for the linux inotify tool. It lets you watch for
+filesystem events on your filesystem tree.
 
 ## Usage ##
- 
+
   ```c++
-  
-#include <inotify/NotifierBuilder.h>
+
+#include <inotify-cpp/NotifierBuilder.h>
 
 #include <boost/filesystem.hpp>
 
@@ -42,18 +42,30 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-  ``` 
+  ```
 
 ## Build Example ##
 ```bash
-mkdir build; cd build
-cmake ..
-cmake --build .
+cmake example
+cmake --build example
 ./example/inotify_example
 ```
 
+## Build Library ##
+```bash
+# '/usr' is the default prefix
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .
+cmake --build .
+
+# run tests
+make test
+
+# install the library
+make install
+```
+
 ## Dependencies ##
- + boost 1.61.1
+ + boost 1.54.0
  + c++11
  + linux 2.6.13
 

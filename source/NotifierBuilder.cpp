@@ -1,4 +1,4 @@
-#include <inotify/NotifierBuilder.h>
+#include <inotify-cpp/NotifierBuilder.h>
 
 namespace inotify {
 

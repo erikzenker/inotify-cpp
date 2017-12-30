@@ -1,4 +1,4 @@
-#include <inotify/FileSystemEvent.h>
+#include <inotify-cpp/FileSystemEvent.h>
 
 #include <sys/inotify.h>
 

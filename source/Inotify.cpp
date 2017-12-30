@@ -1,4 +1,4 @@
-#include <inotify/Inotify.h>
+#include <inotify-cpp/Inotify.h>
 
 #include <string>
 #include <vector>
