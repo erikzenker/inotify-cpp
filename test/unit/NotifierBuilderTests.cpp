@@ -3,6 +3,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <chrono>
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -20,7 +21,8 @@ void openFile(boost::filesystem::path file)
 struct NotifierBuilderTests {
     NotifierBuilderTests()
         : testDirectory_("testDirectory")
-        , testFile_("testDirectory/test.txt")
+        , recursiveTestDirectory_(testDirectory_ / "recursiveTestDirectory")
+        , testFile_(testDirectory_ / "test.txt")
         , timeout_(1)
     {
         boost::filesystem::create_directories(testDirectory_);
@@ -29,6 +31,7 @@ struct NotifierBuilderTests {
     ~NotifierBuilderTests() = default;
 
     boost::filesystem::path testDirectory_;
+    boost::filesystem::path recursiveTestDirectory_;
     boost::filesystem::path testFile_;
 
     std::chrono::seconds timeout_;
@@ -128,6 +131,23 @@ BOOST_FIXTURE_TEST_CASE(shouldIgnoreFileOnce, NotifierBuilderTests)
     thread.join();
 }
 
+BOOST_FIXTURE_TEST_CASE(shouldIgnoreFile, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier().watchFile(testFile_).ignoreFile(testFile_).onEvent(
+        Event::open, [&](Notification notification) { promisedOpen_.set_value(notification); });
+
+    std::thread thread([&notifier]() { notifier.run(); });
+
+    openFile(testFile_);
+    openFile(testFile_);
+
+    auto futureOpen = promisedOpen_.get_future();
+    BOOST_CHECK(futureOpen.wait_for(timeout_) != std::future_status::ready);
+
+    notifier.stop();
+    thread.join();
+}
+
 BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
 {
 
@@ -169,12 +189,38 @@ BOOST_FIXTURE_TEST_CASE(shouldCallUserDefinedUnexpectedExceptionObserver, Notifi
     std::promise<void> observerCalled;
 
     auto notifier = BuildNotifier().watchFile(testFile_).onUnexpectedEvent(
-        [&observerCalled](Notification) { observerCalled.set_value(); });
+        [&](Notification) { observerCalled.set_value(); });
 
     std::thread thread([&notifier]() { notifier.runOnce(); });
 
     openFile(testFile_);
 
     BOOST_CHECK(observerCalled.get_future().wait_for(timeout_) == std::future_status::ready);
+    thread.join();
+}
+
+BOOST_FIXTURE_TEST_CASE(shouldSetEventTimeout, NotifierBuilderTests)
+{
+    std::promise<Notification> timeoutObserved;
+    std::chrono::milliseconds timeout(100);
+
+    auto notifier
+        = BuildNotifier()
+              .watchFile(testFile_)
+              .onEvent(
+                  Event::open,
+                  [&](Notification notification) { promisedOpen_.set_value(notification); })
+              .setEventTimeout(timeout, [&](Notification notification) {
+                  timeoutObserved.set_value(notification);
+              });
+
+    std::thread thread([&notifier]() {
+        notifier.runOnce(); // open
+    });
+
+    openFile(testFile_);
+
+    BOOST_CHECK(promisedOpen_.get_future().wait_for(timeout_) == std::future_status::ready);
+    BOOST_CHECK(timeoutObserved.get_future().wait_for(timeout_) == std::future_status::ready);
     thread.join();
 }

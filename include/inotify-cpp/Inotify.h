@@ -71,16 +71,15 @@ namespace inotify {
 class Inotify {
  public:
   Inotify();
-  Inotify(uint32_t eventMask);
-  Inotify(std::vector< std::string> ignoredDirectories,  unsigned eventTimeout, uint32_t eventMask);
   ~Inotify();
   void watchDirectoryRecursively(fs::path path);
   void watchFile(fs::path file);
   void ignoreFileOnce(fs::path file);
+  void ignoreFile(fs::path file);
   void setEventMask(uint32_t eventMask);
   uint32_t getEventMask();
+  void setEventTimeout(uint32_t eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout);
   boost::optional<FileSystemEvent> getNextEvent();
-  int getLastErrno();
   void stop();
 
 private:
@@ -102,5 +101,6 @@ private:
   std::map<int, fs::path> mDirectorieMap;
   int mInotifyFd;
   bool stopped;
+  std::function<void(FileSystemEvent)> mOnEventTimeout;
 };
 }

@@ -22,9 +22,12 @@ class NotifierBuilder {
     auto watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&;
     auto watchFile(boost::filesystem::path file) -> NotifierBuilder&;
     auto ignoreFileOnce(boost::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFile(boost::filesystem::path file) -> NotifierBuilder&;
     auto onEvent(Event event, EventObserver) -> NotifierBuilder&;
     auto onEvents(std::vector<Event> event, EventObserver) -> NotifierBuilder&;
     auto onUnexpectedEvent(EventObserver) -> NotifierBuilder&;
+    auto setEventTimeout(std::chrono::milliseconds timeout, EventObserver eventObserver)
+        -> NotifierBuilder&;
 
   private:
     std::shared_ptr<Inotify> mInotify;
