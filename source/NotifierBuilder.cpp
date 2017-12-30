@@ -36,6 +36,12 @@ auto NotifierBuilder::ignoreFileOnce(boost::filesystem::path file) -> NotifierBu
     return *this;
 }
 
+auto NotifierBuilder::ignoreFile(boost::filesystem::path file) -> NotifierBuilder&
+{
+    mInotify->ignoreFile(file.string());
+    return *this;
+}
+
 auto NotifierBuilder::onEvent(Event event, EventObserver eventObserver) -> NotifierBuilder&
 {
     mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
@@ -57,6 +63,21 @@ auto NotifierBuilder::onEvents(std::vector<Event> events, EventObserver eventObs
 auto NotifierBuilder::onUnexpectedEvent(EventObserver eventObserver) -> NotifierBuilder&
 {
     mUnexpectedEventObserver = eventObserver;
+    return *this;
+}
+
+auto NotifierBuilder::setEventTimeout(
+    std::chrono::milliseconds timeout, EventObserver eventObserver) -> NotifierBuilder&
+{
+    auto onEventTimeout = [eventObserver](FileSystemEvent fileSystemEvent) {
+
+        Notification notification;
+        notification.path = fileSystemEvent.path;
+        notification.event = static_cast<Event>(fileSystemEvent.mask);
+        eventObserver(notification);
+    };
+
+    mInotify->setEventTimeout(timeout.count(), onEventTimeout);
     return *this;
 }
 

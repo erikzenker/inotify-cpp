@@ -13,35 +13,7 @@ Inotify::Inotify()
     , mIgnoredDirectories(std::vector<std::string>())
     , mInotifyFd(0)
     , mThreadSleep(250)
-{
-
-    // Initialize inotify
-    init();
-}
-
-Inotify::Inotify(uint32_t eventMask)
-    : mError(0)
-    , mEventTimeout(0)
-    , mLastEventTime(0)
-    , mEventMask(eventMask)
-    , mIgnoredDirectories(std::vector<std::string>())
-    , mInotifyFd(0)
-    , mThreadSleep(250)
-{
-
-    // Initialize inotify
-    init();
-}
-
-Inotify::Inotify(
-    std::vector<std::string> ignoredDirectories, unsigned eventTimeout, uint32_t eventMask)
-    : mError(0)
-    , mEventTimeout(eventTimeout)
-    , mLastEventTime(0)
-    , mEventMask(eventMask)
-    , mIgnoredDirectories(ignoredDirectories)
-    , mInotifyFd(0)
-    , mThreadSleep(250)
+    , mOnEventTimeout([](FileSystemEvent event) {})
 {
 
     // Initialize inotify
@@ -146,6 +118,11 @@ void Inotify::ignoreFileOnce(fs::path file)
     mOnceIgnoredDirectories.push_back(file.string());
 }
 
+void Inotify::ignoreFile(fs::path file)
+{
+    mIgnoredDirectories.push_back(file.string());
+}
+
 /**
  * @brief Removes watch from set of watches. This
  *        is not done recursively!
@@ -178,6 +155,13 @@ void Inotify::setEventMask(uint32_t eventMask)
 uint32_t Inotify::getEventMask()
 {
     return mEventMask;
+}
+
+void Inotify::setEventTimeout(
+    uint32_t eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout)
+{
+    mEventTimeout = eventTimeout;
+    mOnEventTimeout = onEventTimeout;
 }
 
 /**
@@ -244,6 +228,7 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
             FileSystemEvent currentEvent = *eventIt;
             if (onTimeout(currentEventTime)) {
                 events.erase(eventIt);
+                mOnEventTimeout(currentEvent);
 
             } else if (isIgnored(currentEvent.path.string())) {
                 events.erase(eventIt);
@@ -258,11 +243,6 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
     FileSystemEvent event = mEventQueue.front();
     mEventQueue.pop();
     return event;
-}
-
-int Inotify::getLastErrno()
-{
-    return mError;
 }
 
 void Inotify::stop()
