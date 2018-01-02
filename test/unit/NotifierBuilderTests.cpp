@@ -173,6 +173,21 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
     thread.join();
 }
 
+BOOST_FIXTURE_TEST_CASE(shouldUnwatchPath, NotifierBuilderTests)
+{
+    std::promise<Notification> timeoutObserved;
+    std::chrono::milliseconds timeout(100);
+
+    auto notifier = BuildNotifier().watchFile(testFile_).unwatchFile(testFile_);
+
+    std::thread thread([&notifier]() { notifier.runOnce(); });
+
+    openFile(testFile_);
+    BOOST_CHECK(promisedOpen_.get_future().wait_for(timeout_) != std::future_status::ready);
+    notifier.stop();
+    thread.join();
+}
+
 BOOST_FIXTURE_TEST_CASE(shouldThrowOnUnexpectedEvent, NotifierBuilderTests)
 {
     auto notifier = BuildNotifier().watchFile(testFile_);

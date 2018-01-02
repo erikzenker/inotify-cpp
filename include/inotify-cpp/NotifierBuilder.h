@@ -21,6 +21,7 @@ class NotifierBuilder {
     auto stop() -> void;
     auto watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&;
     auto watchFile(boost::filesystem::path file) -> NotifierBuilder&;
+    auto unwatchFile(boost::filesystem::path file) -> NotifierBuilder&;
     auto ignoreFileOnce(boost::filesystem::path file) -> NotifierBuilder&;
     auto ignoreFile(boost::filesystem::path file) -> NotifierBuilder&;
     auto onEvent(Event event, EventObserver) -> NotifierBuilder&;

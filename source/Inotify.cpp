@@ -106,7 +106,7 @@ void Inotify::watchFile(fs::path filePath)
                         << ". Path: " << filePath.string();
             throw std::runtime_error(errorStream.str());
         }
-        mDirectorieMap[wd] = filePath;
+        mDirectorieMap.left.insert({wd, filePath});
     } else {
         throw std::invalid_argument(
             "Can´t watch Path! Path does not exist. Path: " + filePath.string());
@@ -121,6 +121,12 @@ void Inotify::ignoreFileOnce(fs::path file)
 void Inotify::ignoreFile(fs::path file)
 {
     mIgnoredDirectories.push_back(file.string());
+}
+
+
+void Inotify::unwatchFile(fs::path file)
+{
+    removeWatch(mDirectorieMap.right.at(file));
 }
 
 /**
@@ -139,12 +145,11 @@ void Inotify::removeWatch(int wd)
         errorStream << "Failed to remove watch! " << strerror(mError) << ".";
         throw std::runtime_error(errorStream.str());
     }
-    mDirectorieMap.erase(wd);
 }
 
 fs::path Inotify::wdToPath(int wd)
 {
-    return mDirectorieMap[wd];
+    return mDirectorieMap.left.at(wd);
 }
 
 void Inotify::setEventMask(uint32_t eventMask)
@@ -207,7 +212,15 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
         int i = 0;
         while (i < length) {
             inotify_event* event = ((struct inotify_event*)&buffer[i]);
-            fs::path path(wdToPath(event->wd) / std::string(event->name));
+
+            if(event->mask & IN_IGNORED){
+                i += EVENT_SIZE + event->len;
+                mDirectorieMap.left.erase(event->wd);
+                continue;
+            }
+
+            auto path = wdToPath(event->wd) / std::string(event->name);
+
             if (fs::is_directory(path)) {
                 event->mask |= IN_ISDIR;
             }
@@ -252,10 +265,6 @@ void Inotify::stop()
 
 bool Inotify::isIgnored(std::string file)
 {
-    if (mIgnoredDirectories.empty() and mOnceIgnoredDirectories.empty()) {
-        return false;
-    }
-
     for (unsigned i = 0; i < mOnceIgnoredDirectories.size(); ++i) {
         size_t pos = file.find(mOnceIgnoredDirectories[i]);
         if (pos != std::string::npos) {

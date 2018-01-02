@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
+#include <boost/bimap.hpp>
 #include <errno.h>
 #include <exception>
 #include <map>
@@ -74,6 +75,7 @@ class Inotify {
   ~Inotify();
   void watchDirectoryRecursively(fs::path path);
   void watchFile(fs::path file);
+  void unwatchFile(fs::path file);
   void ignoreFileOnce(fs::path file);
   void ignoreFile(fs::path file);
   void setEventMask(uint32_t eventMask);
@@ -86,7 +88,7 @@ private:
   fs::path wdToPath(int wd);
   bool isIgnored(std::string file);
   bool onTimeout(time_t eventTime);
-  void removeWatch(int wd);  // TODO
+  void removeWatch(int wd);
   void init();
 
   // Member
@@ -98,7 +100,7 @@ private:
   std::vector<std::string> mIgnoredDirectories;
   std::vector<std::string> mOnceIgnoredDirectories;
   std::queue<FileSystemEvent> mEventQueue;
-  std::map<int, fs::path> mDirectorieMap;
+  boost::bimap<int, fs::path> mDirectorieMap;
   int mInotifyFd;
   bool stopped;
   std::function<void(FileSystemEvent)> mOnEventTimeout;
