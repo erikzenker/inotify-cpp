@@ -30,6 +30,12 @@ auto NotifierBuilder::watchFile(boost::filesystem::path file) -> NotifierBuilder
     return *this;
 }
 
+auto NotifierBuilder::unwatchFile(boost::filesystem::path file) -> NotifierBuilder&
+{
+    mInotify->unwatchFile(file);
+    return *this;
+}
+
 auto NotifierBuilder::ignoreFileOnce(boost::filesystem::path file) -> NotifierBuilder&
 {
     mInotify->ignoreFileOnce(file.string());
