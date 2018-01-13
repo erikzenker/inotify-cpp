@@ -9,7 +9,10 @@ find_package(
   COMPONENTS system filesystem unit_test_framework
   REQUIRED
 )
+
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+
+find_package(Threads)
 
 find_library(
   INOTIFY_CPP_LIBRARY inotify-cpp
@@ -19,7 +22,7 @@ find_library(
 add_executable(inotify_example main.cpp)
 target_link_libraries(
   inotify_example
-  PUBLIC ${INOTIFY_CPP_LIBRARY} ${Boost_LIBRARIES}
+  PUBLIC ${INOTIFY_CPP_LIBRARY} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
 )
 target_include_directories(
   inotify_example
