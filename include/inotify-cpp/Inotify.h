@@ -21,6 +21,7 @@
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <atomic>
 
 #include <inotify-cpp/FileSystemEvent.h>
 
@@ -102,7 +103,7 @@ private:
   std::queue<FileSystemEvent> mEventQueue;
   boost::bimap<int, fs::path> mDirectorieMap;
   int mInotifyFd;
-  bool stopped;
+  std::atomic<bool> stopped;
   std::function<void(FileSystemEvent)> mOnEventTimeout;
 };
 }
