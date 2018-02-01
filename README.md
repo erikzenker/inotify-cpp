@@ -103,3 +103,6 @@ MIT
 
 ## Author ##
 Written by Erik Zenker (erikzenker@hotmail.com)
+
+## Thanks for Contribution ##
+  + [spelcaster](https://github.com/spelcaster)
