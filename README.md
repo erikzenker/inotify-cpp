@@ -1,4 +1,4 @@
-Inotify-cpp
+# Inotify-cpp #
 
 [![Build Status](https://travis-ci.org/erikzenker/inotify-cpp.svg?branch=master)](https://travis-ci.org/erikzenker/inotify-cpp) [![Coverity Scan Build Status](https://scan.coverity.com/projects/14692/badge.svg)](https://scan.coverity.com/projects/erikzenker-inotify-cpp) [![codecov](https://codecov.io/gh/erikzenker/inotify-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/erikzenker/inotify-cpp)
 ===========
