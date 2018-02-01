@@ -8,12 +8,12 @@ namespace inotify {
 Inotify::Inotify()
     : mError(0)
     , mEventTimeout(0)
-    , mLastEventTime(0)
+    , mLastEventTime(std::chrono::steady_clock::now())
     , mEventMask(IN_ALL_EVENTS)
+    , mThreadSleep(250)
     , mIgnoredDirectories(std::vector<std::string>())
     , mInotifyFd(0)
-    , mThreadSleep(250)
-    , mOnEventTimeout([](FileSystemEvent event) {})
+    , mOnEventTimeout([](FileSystemEvent) {})
 {
 
     // Initialize inotify
@@ -163,7 +163,7 @@ uint32_t Inotify::getEventMask()
 }
 
 void Inotify::setEventTimeout(
-    uint32_t eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout)
+    std::chrono::milliseconds eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout)
 {
     mEventTimeout = eventTimeout;
     mOnEventTimeout = onEventTimeout;
@@ -183,7 +183,7 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
 {
     int length = 0;
     char buffer[EVENT_BUF_LEN];
-    time_t currentEventTime = time(NULL);
+    std::chrono::steady_clock::time_point currentEventTime;
     std::vector<FileSystemEvent> events;
 
     // Read Events from fd into buffer
@@ -194,7 +194,6 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
             std::this_thread::sleep_for(std::chrono::milliseconds(mThreadSleep));
 
             length = read(mInotifyFd, buffer, EVENT_BUF_LEN);
-            currentEventTime = time(NULL);
             if (length == -1) {
                 mError = errno;
                 if (mError != EINTR) {
@@ -208,7 +207,7 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
         }
 
         // Read events from buffer into queue
-        currentEventTime = time(NULL);
+        currentEventTime = std::chrono::steady_clock::now();
         int i = 0;
         while (i < length) {
             inotify_event* event = ((struct inotify_event*)&buffer[i]);
@@ -283,8 +282,8 @@ bool Inotify::isIgnored(std::string file)
     return false;
 }
 
-bool Inotify::onTimeout(time_t eventTime)
+bool Inotify::onTimeout(const std::chrono::steady_clock::time_point& eventTime)
 {
-    return (mLastEventTime + mEventTimeout) > eventTime;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(eventTime - mLastEventTime) < mEventTimeout;
 }
 }
