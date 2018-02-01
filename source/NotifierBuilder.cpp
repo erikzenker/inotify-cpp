@@ -83,7 +83,7 @@ auto NotifierBuilder::setEventTimeout(
         eventObserver(notification);
     };
 
-    mInotify->setEventTimeout(timeout.count(), onEventTimeout);
+    mInotify->setEventTimeout(timeout, onEventTimeout);
     return *this;
 }
 

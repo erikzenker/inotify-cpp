@@ -81,21 +81,21 @@ class Inotify {
   void ignoreFile(fs::path file);
   void setEventMask(uint32_t eventMask);
   uint32_t getEventMask();
-  void setEventTimeout(uint32_t eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout);
+  void setEventTimeout(std::chrono::milliseconds eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout);
   boost::optional<FileSystemEvent> getNextEvent();
   void stop();
 
 private:
   fs::path wdToPath(int wd);
   bool isIgnored(std::string file);
-  bool onTimeout(time_t eventTime);
+  bool onTimeout(const std::chrono::steady_clock::time_point& eventTime);
   void removeWatch(int wd);
   void init();
 
   // Member
   int mError;
-  time_t mEventTimeout;
-  time_t mLastEventTime;
+  std::chrono::milliseconds mEventTimeout;
+  std::chrono::steady_clock::time_point mLastEventTime;
   uint32_t mEventMask;
   uint32_t mThreadSleep;
   std::vector<std::string> mIgnoredDirectories;
