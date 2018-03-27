@@ -262,6 +262,11 @@ void Inotify::stop()
     stopped = true;
 }
 
+bool Inotify::hasStopped()
+{
+  return stopped;
+}
+
 bool Inotify::isIgnored(std::string file)
 {
     for (unsigned i = 0; i < mOnceIgnoredDirectories.size(); ++i) {
