@@ -84,6 +84,7 @@ class Inotify {
   void setEventTimeout(std::chrono::milliseconds eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout);
   boost::optional<FileSystemEvent> getNextEvent();
   void stop();
+  bool hasStopped();
 
 private:
   fs::path wdToPath(int wd);

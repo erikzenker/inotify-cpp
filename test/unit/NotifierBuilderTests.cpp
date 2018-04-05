@@ -188,17 +188,6 @@ BOOST_FIXTURE_TEST_CASE(shouldUnwatchPath, NotifierBuilderTests)
     thread.join();
 }
 
-BOOST_FIXTURE_TEST_CASE(shouldThrowOnUnexpectedEvent, NotifierBuilderTests)
-{
-    auto notifier = BuildNotifier().watchFile(testFile_);
-
-    std::thread thread(
-        [&notifier]() { BOOST_CHECK_THROW(notifier.runOnce(), std::runtime_error); });
-
-    openFile(testFile_);
-    thread.join();
-}
-
 BOOST_FIXTURE_TEST_CASE(shouldCallUserDefinedUnexpectedExceptionObserver, NotifierBuilderTests)
 {
     std::promise<void> observerCalled;

@@ -4,19 +4,13 @@ namespace inotify {
 
 NotifierBuilder::NotifierBuilder()
     : mInotify(std::make_shared<Inotify>())
-    , mUnexpectedEventObserver([](Notification notification) {
-        std::stringstream ss;
-        ss << "Unexpected event " << notification.event << " on " << notification.path;
-        throw std::runtime_error(ss.str());
-    })
-
 {
 }
 
 NotifierBuilder BuildNotifier()
 {
     return {};
-};
+}
 
 auto NotifierBuilder::watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&
 {
@@ -87,11 +81,11 @@ auto NotifierBuilder::setEventTimeout(
     return *this;
 }
 
-auto NotifierBuilder::runOnce() -> bool
+auto NotifierBuilder::runOnce() -> void
 {
     auto fileSystemEvent = mInotify->getNextEvent();
     if (!fileSystemEvent) {
-        return false;
+        return;
     }
 
     Event event = static_cast<Event>(fileSystemEvent->mask);
@@ -102,8 +96,11 @@ auto NotifierBuilder::runOnce() -> bool
 
     auto eventAndEventObserver = mEventObserver.find(event);
     if (eventAndEventObserver == mEventObserver.end()) {
-        mUnexpectedEventObserver(notification);
-        return true;
+        if (mUnexpectedEventObserver) {
+          mUnexpectedEventObserver(notification);
+        }
+
+        return;
     }
 
     auto eventObserver = eventAndEventObserver->second;
@@ -113,9 +110,11 @@ auto NotifierBuilder::runOnce() -> bool
 auto NotifierBuilder::run() -> void
 {
     while (true) {
-        if (!runOnce()) {
-            return;
+        if (mInotify->hasStopped()) {
+          break;
         }
+
+        runOnce();
     }
 }
 

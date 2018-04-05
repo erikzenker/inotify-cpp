@@ -189,7 +189,7 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
     // Read Events from fd into buffer
     while (mEventQueue.empty()) {
         length = 0;
-        memset(&buffer, 0, EVENT_BUF_LEN);
+        memset(buffer, '\0', sizeof(buffer));
         while (length <= 0 && !stopped) {
             std::this_thread::sleep_for(std::chrono::milliseconds(mThreadSleep));
 
@@ -260,6 +260,11 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
 void Inotify::stop()
 {
     stopped = true;
+}
+
+bool Inotify::hasStopped()
+{
+  return stopped;
 }
 
 bool Inotify::isIgnored(std::string file)

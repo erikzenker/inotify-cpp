@@ -17,7 +17,7 @@ class NotifierBuilder {
     NotifierBuilder();
 
     auto run() -> void;
-    auto runOnce() -> bool;
+    auto runOnce() -> void;
     auto stop() -> void;
     auto watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&;
     auto watchFile(boost::filesystem::path file) -> NotifierBuilder&;
