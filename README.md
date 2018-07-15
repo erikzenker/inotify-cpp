@@ -93,9 +93,8 @@ make test
 make install
 ```
 
-## Install from packet ##
-* Arch Linux
-`yaourt -S inotify-cpp-git`
+## Install from Packet ##
+* Arch Linux: `yaourt -S inotify-cpp-git`
 
 ## Dependencies ##
  + boost 1.54.0
