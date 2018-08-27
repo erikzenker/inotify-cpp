@@ -76,7 +76,7 @@ Build and install the library before you run the following commands:
 ```bash
 mkdir build; cd build
 cmake ../example
-cmake --build example
+cmake --build inotify_example
 ./inotify_example
 ```
 
