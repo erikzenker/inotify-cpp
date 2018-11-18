@@ -1,30 +1,35 @@
-cmake_minimum_required(VERSION 3.2.2)
-project(InotifyExample)
+cmake_minimum_required(VERSION 3.5)
+project(inotify-cppExample)
+
+###############################################################################
+# INOTIFY-CPP
+###############################################################################
+if(NOT TARGET inotify-cpp::inotify-cpp)
+    find_package(inotify-cpp CONFIG REQUIRED)
+endif()
 
 ###############################################################################
 # Boost
 ###############################################################################
 find_package(
-  Boost 1.54.0
-  COMPONENTS system filesystem unit_test_framework
-  REQUIRED
+        Boost 1.54.0
+        COMPONENTS unit_test_framework system filesystem
+        REQUIRED
 )
 
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-
+###############################################################################
+# Thread
+###############################################################################
 find_package(Threads)
 
-find_library(
-  INOTIFY_CPP_LIBRARY inotify-cpp
-  HINTS ${CMAKE_SOURCE_DIR}/../source
-)
-
+###############################################################################
+# Target
+###############################################################################
 add_executable(inotify_example main.cpp)
-target_link_libraries(
-  inotify_example
-  PUBLIC ${INOTIFY_CPP_LIBRARY} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
-)
-target_include_directories(
-  inotify_example
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include
-)
+target_link_libraries(inotify_example
+        PRIVATE
+        inotify-cpp::inotify-cpp
+        Boost::unit_test_framework
+        Boost::system
+        Boost::filesystem
+        ${CMAKE_THREAD_LIBS_INIT})
