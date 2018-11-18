@@ -70,6 +70,19 @@ int main(int argc, char** argv)
     return 0;
 }
   ```
+  
+## Build Library ##
+```bash
+mkdir build; cd bulid
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+cmake --build .
+
+# run tests
+ctest -VV
+
+# install the library
+make install
+```
 
 ## Build Example ##
 Build and install the library before you run the following commands:
@@ -80,26 +93,16 @@ cmake --build inotify_example
 ./inotify_example
 ```
 
-## Build Library ##
-```bash
-mkdir build; cd bulid
-cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
-cmake --build .
-
-# run tests
-make test
-
-# install the library
-make install
-```
-
 ## Install from Packet ##
 * Arch Linux: `yaourt -S inotify-cpp-git`
 
 ## Dependencies ##
- + boost 1.54.0
- + c++11
- + linux 2.6.13
+ + lib
+   + boost 1.54.0
+   + c++11
+   + linux 2.6.13
+ + build
+   + cmake 3.5   
 
 ## Licence
 MIT

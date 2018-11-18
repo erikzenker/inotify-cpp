@@ -68,6 +68,7 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnMultipleEvents, NotifierBuilderTests)
     auto notifier = BuildNotifier().watchFile(testFile_).onEvents(
         { Event::open, Event::close_nowrite }, [&](Notification notification) {
             switch (notification.event) {
+            default: break;
             case Event::open:
                 promisedOpen_.set_value(notification);
                 break;
@@ -155,6 +156,7 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
                         .watchPathRecursively(testDirectory_)
                         .onEvent(Event::open, [&](Notification notification) {
                             switch (notification.event) {
+                            default: break;
                             case Event::open:
                                 promisedOpen_.set_value(notification);
                                 break;
