@@ -65,7 +65,14 @@ auto NotifierBuilder::onUnexpectedEvent(EventObserver eventObserver) -> Notifier
     mUnexpectedEventObserver = eventObserver;
     return *this;
 }
-
+/**
+ * Sets the time between two successive events. Events occurring in between
+ * will be ignored and the event observer will be called.
+ *
+ * @param timeout
+ * @param eventObserver
+ * @return
+ */
 auto NotifierBuilder::setEventTimeout(
     std::chrono::milliseconds timeout, EventObserver eventObserver) -> NotifierBuilder&
 {

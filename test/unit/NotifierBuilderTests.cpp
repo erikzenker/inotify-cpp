@@ -70,6 +70,18 @@ BOOST_FIXTURE_TEST_CASE(shouldNotAcceptNotExistingPaths, NotifierBuilderTests)
     BOOST_CHECK_THROW(BuildNotifier().watchFile("/not/existing/file"), std::invalid_argument);
 }
 
+BOOST_FIXTURE_TEST_CASE(shouldStopNotifierLoop, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier().watchFile(testFile_);
+
+    std::thread thread([&notifier]() { notifier.run(); });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+
+    notifier.stop();
+    thread.join();
+}
+
 BOOST_FIXTURE_TEST_CASE(shouldNotifyOnOpenEvent, NotifierBuilderTests)
 {
     auto notifier = BuildNotifier().watchFile(testFile_).onEvent(
@@ -336,18 +348,21 @@ BOOST_FIXTURE_TEST_CASE(shouldSetEventTimeout, NotifierBuilderTests)
               .watchFile(testFile_)
               .onEvent(
                   Event::open,
-                  [&](Notification notification) { promisedOpen_.set_value(notification); })
+                  [&](Notification notification) {
+                      promisedOpen_.set_value(notification); })
               .setEventTimeout(timeout, [&](Notification notification) {
                   timeoutObserved.set_value(notification);
               });
 
     std::thread thread([&notifier]() {
-        notifier.runOnce(); // open
+        notifier.run(); // open
     });
 
     openFile(testFile_);
 
     BOOST_CHECK(promisedOpen_.get_future().wait_for(timeout_) == std::future_status::ready);
     BOOST_CHECK(timeoutObserved.get_future().wait_for(timeout_) == std::future_status::ready);
+
+    notifier.stop();
     thread.join();
 }
