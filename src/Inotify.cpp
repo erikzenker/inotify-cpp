@@ -14,8 +14,8 @@ Inotify::Inotify()
     , mIgnoredDirectories(std::vector<std::string>())
     , mInotifyFd(0)
     , mOnEventTimeout([](FileSystemEvent) {})
+    , mEventBuffer(MAX_EVENTS * (EVENT_SIZE + 16), 0)
 {
-
     // Initialize inotify
     init();
 }
@@ -29,7 +29,7 @@ Inotify::~Inotify()
 
 void Inotify::init()
 {
-    stopped = false;
+    mStopped = false;
     mInotifyFd = inotify_init1(IN_NONBLOCK);
     if (mInotifyFd == -1) {
         mError = errno;
@@ -181,90 +181,31 @@ void Inotify::setEventTimeout(
  */
 boost::optional<FileSystemEvent> Inotify::getNextEvent()
 {
-    int length = 0;
-    char buffer[EVENT_BUF_LEN];
-    std::chrono::steady_clock::time_point currentEventTime;
-    std::vector<FileSystemEvent> events;
+    std::vector<FileSystemEvent> newEvents;
 
-    // Read Events from fd into buffer
-    while (mEventQueue.empty()) {
-        length = 0;
-        memset(buffer, '\0', sizeof(buffer));
-        while (length <= 0 && !stopped) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(mThreadSleep));
-
-            length = read(mInotifyFd, buffer, EVENT_BUF_LEN);
-            if (length == -1) {
-                mError = errno;
-                if (mError != EINTR) {
-                    continue;
-                }
-            }
-        }
-
-        if (stopped) {
-            return boost::none;
-        }
-
-        // Read events from buffer into queue
-        currentEventTime = std::chrono::steady_clock::now();
-        int i = 0;
-        while (i < length) {
-            inotify_event* event = ((struct inotify_event*)&buffer[i]);
-
-            if(event->mask & IN_IGNORED){
-                i += EVENT_SIZE + event->len;
-                mDirectorieMap.left.erase(event->wd);
-                continue;
-            }
-
-            auto path = wdToPath(event->wd) / std::string(event->name);
-
-            if (fs::is_directory(path)) {
-                event->mask |= IN_ISDIR;
-            }
-            FileSystemEvent fsEvent(event->wd, event->mask, path);
-
-            if (!fsEvent.path.empty()) {
-                events.push_back(fsEvent);
-
-            } else {
-                // Event is not complete --> ignore
-            }
-
-            i += EVENT_SIZE + event->len;
-        }
-
-        // Filter events
-        for (auto eventIt = events.begin(); eventIt < events.end(); ++eventIt) {
-            FileSystemEvent currentEvent = *eventIt;
-            if (onTimeout(currentEventTime)) {
-                events.erase(eventIt);
-                mOnEventTimeout(currentEvent);
-
-            } else if (isIgnored(currentEvent.path.string())) {
-                events.erase(eventIt);
-            } else {
-                mLastEventTime = currentEventTime;
-                mEventQueue.push(currentEvent);
-            }
-        }
+    while (mEventQueue.empty() && !mStopped) {
+        auto length = readEventsIntoBuffer(mEventBuffer);
+        readEventsFromBuffer(mEventBuffer.data(), length, newEvents);
+        filterEvents(newEvents, mEventQueue);
     }
 
-    // Return next event
-    FileSystemEvent event = mEventQueue.front();
+    if (mStopped) {
+        return boost::none;
+    }
+
+    auto event = mEventQueue.front();
     mEventQueue.pop();
     return event;
 }
 
 void Inotify::stop()
 {
-    stopped = true;
+    mStopped = true;
 }
 
 bool Inotify::hasStopped()
 {
-  return stopped;
+    return mStopped;
 }
 
 bool Inotify::isIgnored(std::string file)
@@ -287,8 +228,77 @@ bool Inotify::isIgnored(std::string file)
     return false;
 }
 
-bool Inotify::onTimeout(const std::chrono::steady_clock::time_point& eventTime)
+bool Inotify::isOnTimeout(const std::chrono::steady_clock::time_point &eventTime)
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(eventTime - mLastEventTime) < mEventTimeout;
+}
+
+ssize_t Inotify::readEventsIntoBuffer(std::vector<uint8_t>& eventBuffer)
+{
+    ssize_t length = 0;
+    length = 0;
+    while (length <= 0 && !mStopped) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(mThreadSleep));
+
+        length = read(mInotifyFd, eventBuffer.data(), eventBuffer.size());
+        if (length == -1) {
+            mError = errno;
+            if (mError != EINTR) {
+                continue;
+            }
+        }
+    }
+
+    return length;
+}
+
+void Inotify::readEventsFromBuffer(
+    uint8_t* buffer, int length, std::vector<inotify::FileSystemEvent>& events)
+{
+    int i = 0;
+    while (i < length) {
+        inotify_event* event = ((struct inotify_event*)&buffer[i]);
+
+        if(event->mask & IN_IGNORED){
+            i += EVENT_SIZE + event->len;
+            mDirectorieMap.left.erase(event->wd);
+            continue;
+        }
+
+        auto path = wdToPath(event->wd) / std::string(event->name);
+
+        if (fs::is_directory(path)) {
+            event->mask |= IN_ISDIR;
+        }
+        FileSystemEvent fsEvent(event->wd, event->mask, path, std::chrono::steady_clock::now());
+
+        if (!fsEvent.path.empty()) {
+            events.push_back(fsEvent);
+
+        } else {
+            // Event is not complete --> ignore
+        }
+
+        i += EVENT_SIZE + event->len;
+    }
+}
+
+void Inotify::filterEvents(
+    std::vector<inotify::FileSystemEvent>& events, std::queue<FileSystemEvent>& eventQueue)
+{
+    for (auto eventIt = events.begin(); eventIt < events.end();) {
+        FileSystemEvent currentEvent = *eventIt;
+        if (isOnTimeout(currentEvent.eventTime)) {
+            eventIt = events.erase(eventIt);
+            mOnEventTimeout(currentEvent);
+
+        } else if (isIgnored(currentEvent.path.string())) {
+            eventIt = events.erase(eventIt);
+        } else {
+            mLastEventTime = currentEvent.eventTime;
+            eventQueue.push(currentEvent);
+            eventIt++;
+        }
+    }
 }
 }

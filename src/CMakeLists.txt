@@ -1,6 +1,6 @@
 set(LIB_NAME inotify-cpp)
 set(LIB_COMPANY inotify-cpp)
-set(LIB_SRCS NotifierBuilder.cpp Event.cpp FileSystemEvent.cpp  Inotify.cpp)
+set(LIB_SRCS NotifierBuilder.cpp Event.cpp FileSystemEvent.cpp Inotify.cpp Notification.cpp)
 set(LIB_HEADER
         include/inotify-cpp/NotifierBuilder.h
         include/inotify-cpp/Event.h

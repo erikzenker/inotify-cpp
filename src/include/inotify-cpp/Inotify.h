@@ -89,11 +89,15 @@ class Inotify {
 private:
   fs::path wdToPath(int wd);
   bool isIgnored(std::string file);
-  bool onTimeout(const std::chrono::steady_clock::time_point& eventTime);
+  bool isOnTimeout(const std::chrono::steady_clock::time_point &eventTime);
   void removeWatch(int wd);
   void init();
+  ssize_t readEventsIntoBuffer(std::vector<uint8_t>& eventBuffer);
+  void readEventsFromBuffer(uint8_t* buffer, int length, std::vector<FileSystemEvent> &events);
+  void filterEvents(std::vector<FileSystemEvent>& events, std::queue<FileSystemEvent>& eventQueue);
 
   // Member
+private:
   int mError;
   std::chrono::milliseconds mEventTimeout;
   std::chrono::steady_clock::time_point mLastEventTime;
@@ -104,7 +108,8 @@ private:
   std::queue<FileSystemEvent> mEventQueue;
   boost::bimap<int, fs::path> mDirectorieMap;
   int mInotifyFd;
-  std::atomic<bool> stopped;
+  std::atomic<bool> mStopped;
   std::function<void(FileSystemEvent)> mOnEventTimeout;
+  std::vector<uint8_t> mEventBuffer;
 };
 }

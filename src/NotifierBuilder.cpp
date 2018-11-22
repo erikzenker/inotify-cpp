@@ -70,10 +70,9 @@ auto NotifierBuilder::setEventTimeout(
     std::chrono::milliseconds timeout, EventObserver eventObserver) -> NotifierBuilder&
 {
     auto onEventTimeout = [eventObserver](FileSystemEvent fileSystemEvent) {
-
-        Notification notification;
-        notification.path = fileSystemEvent.path;
-        notification.event = static_cast<Event>(fileSystemEvent.mask);
+        Notification notification { static_cast<Event>(fileSystemEvent.mask),
+                                    fileSystemEvent.path,
+                                    fileSystemEvent.eventTime };
         eventObserver(notification);
     };
 
@@ -90,9 +89,7 @@ auto NotifierBuilder::runOnce() -> void
 
     Event event = static_cast<Event>(fileSystemEvent->mask);
 
-    Notification notification;
-    notification.event = event;
-    notification.path = fileSystemEvent->path;
+    Notification notification { event, fileSystemEvent->path, fileSystemEvent->eventTime };
 
     auto eventAndEventObserver = mEventObserver.find(event);
     if (eventAndEventObserver == mEventObserver.end()) {
