@@ -178,7 +178,6 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
 BOOST_FIXTURE_TEST_CASE(shouldUnwatchPath, NotifierBuilderTests)
 {
     std::promise<Notification> timeoutObserved;
-    std::chrono::milliseconds timeout(100);
 
     auto notifier = BuildNotifier().watchFile(testFile_).unwatchFile(testFile_);
 

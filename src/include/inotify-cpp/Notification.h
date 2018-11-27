@@ -4,10 +4,20 @@
 
 #include <boost/filesystem.hpp>
 
+#include <chrono>
+
 namespace inotify {
 
-struct Notification {
-    Event event;
-    boost::filesystem::path path;
+class Notification {
+  public:
+    Notification(
+        const Event& event,
+        const boost::filesystem::path& path,
+        std::chrono::steady_clock::time_point time);
+
+  public:
+    const Event event;
+    const boost::filesystem::path path;
+    const std::chrono::steady_clock::time_point time;
 };
 }
