@@ -10,7 +10,7 @@ the implementation of a simple filesystem event watcher for the commandline.
 ## Usage ##
 
   ```c++
-  #include <inotify-cpp/NotifierBuilder.h>
+#include <inotify-cpp/NotifierBuilder.h>
 
 #include <boost/filesystem.hpp>
 
@@ -32,14 +32,15 @@ int main(int argc, char** argv)
 
     // Set the event handler which will be used to process particular events
     auto handleNotification = [&](Notification notification) {
-        std::cout << "Event " << notification.event << " on " << notification.path
-                  << " was triggered." << std::endl;
+        std::cout << "Event " << notification.event << " on " << notification.path << " at "
+                  << notification.time.time_since_epoch().count() << " was triggered." << std::endl;
     };
 
     // Set the a separate unexpected event handler for all other events. An exception is thrown by
     // default.
     auto handleUnexpectedNotification = [](Notification notification) {
-        std::cout << "Event " << notification.event << " on " << notification.path
+        std::cout << "Event " << notification.event << " on " << notification.path << " at "
+                  << notification.time.time_since_epoch().count()
                   << " was triggered, but was not expected" << std::endl;
     };
 
@@ -52,7 +53,7 @@ int main(int argc, char** argv)
                     Event::move };
 
     // The notifier is configured to watch the parsed path for the defined events. Particular files
-    // or pathes can be ignored(once).
+    // or paths can be ignored(once).
     auto notifier = BuildNotifier()
                         .watchPathRecursively(path)
                         .ignoreFileOnce("fileIgnoredOnce")

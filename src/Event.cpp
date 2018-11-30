@@ -5,19 +5,6 @@
 #include <type_traits>
 
 namespace inotify {
-Event operator|(Event lhs, Event rhs)
-{
-    return static_cast<Event>(
-        static_cast<std::underlying_type<Event>::type>(lhs)
-        | static_cast<std::underlying_type<Event>::type>(rhs));
-}
-
-Event operator&(Event lhs, Event rhs)
-{
-    return static_cast<Event>(
-        static_cast<std::underlying_type<Event>::type>(lhs)
-        & static_cast<std::underlying_type<Event>::type>(rhs));
-}
 
 bool containsEvent(const Event& allEvents, const Event& event)
 {

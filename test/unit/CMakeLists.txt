@@ -25,7 +25,7 @@ find_package(Threads)
 ###############################################################################
 # Test
 ###############################################################################
-add_executable(inotify_unit_test main.cpp NotifierBuilderTests.cpp)
+add_executable(inotify_unit_test main.cpp NotifierBuilderTests.cpp EventTests.cpp)
 target_link_libraries(inotify_unit_test
         PRIVATE
           inotify-cpp::inotify-cpp

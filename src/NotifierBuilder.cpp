@@ -87,21 +87,22 @@ auto NotifierBuilder::runOnce() -> void
         return;
     }
 
-    Event event = static_cast<Event>(fileSystemEvent->mask);
+    Event currentEvent = static_cast<Event>(fileSystemEvent->mask);
 
-    Notification notification { event, fileSystemEvent->path, fileSystemEvent->eventTime };
+    Notification notification { currentEvent, fileSystemEvent->path, fileSystemEvent->eventTime };
 
-    auto eventAndEventObserver = mEventObserver.find(event);
-    if (eventAndEventObserver == mEventObserver.end()) {
-        if (mUnexpectedEventObserver) {
-          mUnexpectedEventObserver(notification);
+    for (auto& eventAndEventObserver : mEventObserver) {
+        auto& event = eventAndEventObserver.first;
+        auto& eventObserver = eventAndEventObserver.second;
+        if (inotify::containsEvent(event, currentEvent)) {
+            eventObserver(notification);
+            return;
         }
-
-        return;
     }
 
-    auto eventObserver = eventAndEventObserver->second;
-    eventObserver(notification);
+    if (mUnexpectedEventObserver) {
+        mUnexpectedEventObserver(notification);
+    }
 }
 
 auto NotifierBuilder::run() -> void

@@ -28,8 +28,20 @@ enum class Event : std::uint32_t {
     oneshot = IN_ONESHOT,
     all = IN_ALL_EVENTS
 };
+constexpr Event operator&(Event lhs, Event rhs)
+{
+    return static_cast<Event>(
+        static_cast<std::underlying_type<Event>::type>(lhs)
+        & static_cast<std::underlying_type<Event>::type>(rhs));
+}
 
-Event operator|(Event lhs, Event rhs);
-Event operator&(Event lhs, Event rhs);
+constexpr Event operator|(Event lhs, Event rhs)
+{
+    return static_cast<Event>(
+        static_cast<std::underlying_type<Event>::type>(lhs)
+        | static_cast<std::underlying_type<Event>::type>(rhs));
+}
+
 std::ostream& operator<<(std::ostream& stream, const Event& event);
+bool containsEvent(const Event& allEvents, const Event& event);
 }
