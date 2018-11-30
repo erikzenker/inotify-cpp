@@ -33,20 +33,25 @@ struct NotifierBuilderTests {
         : testDirectory_("testDirectory")
         , recursiveTestDirectory_(testDirectory_ / "recursiveTestDirectory")
         , testFile_(testDirectory_ / "test.txt")
+        , recursiveTestFile_(recursiveTestDirectory_ / "recursiveTest.txt")
         , createdFile_(testDirectory_ / "created.txt")
         , timeout_(1)
     {
         boost::filesystem::create_directories(testDirectory_);
+        boost::filesystem::create_directories(recursiveTestDirectory_);
 
         removeFile(testFile_);
+        removeFile(recursiveTestFile_);
         removeFile(createdFile_);
         createFile(testFile_);
+        createFile(recursiveTestFile_);
     }
     ~NotifierBuilderTests() = default;
 
     boost::filesystem::path testDirectory_;
     boost::filesystem::path recursiveTestDirectory_;
     boost::filesystem::path testFile_;
+    boost::filesystem::path recursiveTestFile_;
     boost::filesystem::path createdFile_;
 
     std::chrono::seconds timeout_;
@@ -241,6 +246,22 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
 
     auto futureOpen = promisedOpen_.get_future();
     BOOST_CHECK(futureOpen.wait_for(timeout_) == std::future_status::ready);
+
+    notifier.stop();
+    thread.join();
+}
+
+BOOST_FIXTURE_TEST_CASE(shouldNotTriggerEventsOnWatchRecursively, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier()
+            .watchPathRecursively(testDirectory_)
+            .onEvent(Event::all, [&](Notification) {
+                BOOST_ASSERT_MSG(false, "Events should not be triggered when watching a directory recursively.");
+            });
+
+    std::thread thread([&notifier]() { notifier.runOnce(); });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
 
     notifier.stop();
     thread.join();
