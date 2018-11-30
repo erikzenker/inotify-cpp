@@ -49,27 +49,32 @@ void Inotify::init()
  */
 void Inotify::watchDirectoryRecursively(fs::path path)
 {
+    std::vector<boost::filesystem::path> paths;
+
     if (fs::exists(path)) {
         if (fs::is_directory(path)) {
-            fs::recursive_directory_iterator it(path, fs::symlink_option::recurse);
+            boost::system::error_code ec;
+            fs::recursive_directory_iterator it(path, fs::symlink_option::recurse, ec);
             fs::recursive_directory_iterator end;
 
-            while (it != end) {
+            for (; it != end; it.increment(ec)) {
                 fs::path currentPath = *it;
 
-                if (fs::is_directory(currentPath)) {
-                    watchFile(currentPath);
+                if (!fs::is_directory(currentPath) || !fs::is_symlink(currentPath)) {
+                    continue;
                 }
-                if (fs::is_symlink(currentPath)) {
-                    watchFile(currentPath);
-                }
-                ++it;
+
+                paths.push_back(currentPath);
             }
         }
-        watchFile(path);
+        paths.push_back(path);
     } else {
         throw std::invalid_argument(
             "Can´t watch Path! Path does not exist. Path: " + path.string());
+    }
+
+    for (auto& path : paths) {
+        watchFile(path);
     }
 }
 
