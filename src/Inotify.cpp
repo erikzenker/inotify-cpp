@@ -291,7 +291,6 @@ void Inotify::filterEvents(
         if (isOnTimeout(currentEvent.eventTime)) {
             eventIt = events.erase(eventIt);
             mOnEventTimeout(currentEvent);
-
         } else if (isIgnored(currentEvent.path.string())) {
             eventIt = events.erase(eventIt);
         } else {

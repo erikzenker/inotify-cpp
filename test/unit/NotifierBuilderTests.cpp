@@ -10,7 +10,7 @@
 
 using namespace inotify;
 
-void openFile(boost::filesystem::path file)
+void openFile(const boost::filesystem::path& file)
 {
     std::ifstream stream;
     stream.open(file.string(), std::ifstream::in);
@@ -18,27 +18,44 @@ void openFile(boost::filesystem::path file)
     stream.close();
 }
 
+void createFile(const boost::filesystem::path& file)
+{
+    boost::filesystem::ofstream stream(file);
+}
+
+void removeFile(const boost::filesystem::path& file)
+{
+    boost::filesystem::remove(file);
+}
+
 struct NotifierBuilderTests {
     NotifierBuilderTests()
         : testDirectory_("testDirectory")
         , recursiveTestDirectory_(testDirectory_ / "recursiveTestDirectory")
         , testFile_(testDirectory_ / "test.txt")
+        , createdFile_(testDirectory_ / "created.txt")
         , timeout_(1)
     {
         boost::filesystem::create_directories(testDirectory_);
-        boost::filesystem::ofstream stream(testFile_);
+
+        removeFile(testFile_);
+        removeFile(createdFile_);
+        createFile(testFile_);
     }
     ~NotifierBuilderTests() = default;
 
     boost::filesystem::path testDirectory_;
     boost::filesystem::path recursiveTestDirectory_;
     boost::filesystem::path testFile_;
+    boost::filesystem::path createdFile_;
 
     std::chrono::seconds timeout_;
 
     // Events
     std::promise<Notification> promisedOpen_;
+    std::promise<Notification> promisedCreate_;
     std::promise<Notification> promisedCloseNoWrite_;
+    std::promise<Notification> promisedCombinedEvent_;
 };
 
 BOOST_FIXTURE_TEST_CASE(shouldNotAcceptNotExistingPaths, NotifierBuilderTests)
@@ -63,12 +80,66 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnOpenEvent, NotifierBuilderTests)
     thread.join();
 }
 
+BOOST_FIXTURE_TEST_CASE(shouldNotifyOnAllEvents, NotifierBuilderTests)
+{
+    auto notifier
+        = BuildNotifier()
+              .watchFile(testFile_)
+              .onEvent(
+                  Event::all,
+                  [&](Notification notification) {
+                      switch (notification.event) {
+                      default:
+                          BOOST_ASSERT_MSG(false, "All events should be handled");
+                      case Event::open:
+                          promisedOpen_.set_value(notification);
+                          break;
+                      case Event::close_nowrite:
+                          promisedCombinedEvent_.set_value(notification);
+                          break;
+                      };
+                  })
+              .onUnexpectedEvent([](Notification) {
+                  BOOST_ASSERT_MSG(false, "All events should be catched by event observer");
+              });
+
+    std::thread thread([&notifier]() { notifier.run(); });
+
+    openFile(testFile_);
+
+    auto futureOpenEvent = promisedOpen_.get_future();
+    auto futureCombinedEvent = promisedCombinedEvent_.get_future();
+    BOOST_CHECK(futureOpenEvent.wait_for(timeout_) == std::future_status::ready);
+    BOOST_CHECK(futureCombinedEvent.wait_for(timeout_) == std::future_status::ready);
+
+    notifier.stop();
+    thread.join();
+}
+
+BOOST_FIXTURE_TEST_CASE(shouldNotifyOnCombinedEvent, NotifierBuilderTests)
+{
+    auto notifier = BuildNotifier().watchFile(testFile_).onEvent(
+        Event::close_nowrite | Event::close,
+        [&](Notification notification) { promisedCombinedEvent_.set_value(notification); });
+
+    std::thread thread([&notifier]() { notifier.run(); });
+
+    openFile(testFile_);
+
+    auto futureCombinedEvent = promisedCombinedEvent_.get_future();
+    BOOST_CHECK(futureCombinedEvent.wait_for(timeout_) == std::future_status::ready);
+
+    notifier.stop();
+    thread.join();
+}
+
 BOOST_FIXTURE_TEST_CASE(shouldNotifyOnMultipleEvents, NotifierBuilderTests)
 {
     auto notifier = BuildNotifier().watchFile(testFile_).onEvents(
         { Event::open, Event::close_nowrite }, [&](Notification notification) {
             switch (notification.event) {
-            default: break;
+            default:
+                break;
             case Event::open:
                 promisedOpen_.set_value(notification);
                 break;
@@ -156,12 +227,12 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
                         .watchPathRecursively(testDirectory_)
                         .onEvent(Event::open, [&](Notification notification) {
                             switch (notification.event) {
-                            default: break;
+                            default:
+                                break;
                             case Event::open:
                                 promisedOpen_.set_value(notification);
                                 break;
                             }
-
                         });
 
     std::thread thread([&notifier]() { notifier.runOnce(); });
@@ -170,6 +241,36 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
 
     auto futureOpen = promisedOpen_.get_future();
     BOOST_CHECK(futureOpen.wait_for(timeout_) == std::future_status::ready);
+
+    notifier.stop();
+    thread.join();
+}
+
+BOOST_FIXTURE_TEST_CASE(shouldWatchCreatedFile, NotifierBuilderTests)
+{
+
+    auto notifier = BuildNotifier().watchPathRecursively(testDirectory_);
+
+    notifier
+        .onEvent(
+            Event::create,
+            [&](Notification notification) {
+                notifier.watchFile(notification.path);
+                promisedCreate_.set_value(notification);
+            })
+        .onEvent(Event::close_nowrite, [&](Notification notification) {
+            promisedCloseNoWrite_.set_value(notification);
+        });
+
+    std::thread thread([&notifier]() { notifier.run(); });
+
+    createFile(createdFile_);
+    openFile(createdFile_);
+
+    auto futureCreate = promisedCreate_.get_future();
+    BOOST_CHECK(futureCreate.wait_for(timeout_) == std::future_status::ready);
+    auto futureCloseNoWrite = promisedCloseNoWrite_.get_future();
+    BOOST_CHECK(futureCloseNoWrite.wait_for(timeout_) == std::future_status::ready);
 
     notifier.stop();
     thread.join();

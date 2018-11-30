@@ -41,7 +41,7 @@ int main(int argc, char** argv)
                     Event::move };
 
     // The notifier is configured to watch the parsed path for the defined events. Particular files
-    // or pathes can be ignored(once).
+    // or paths can be ignored(once).
     auto notifier = BuildNotifier()
                         .watchPathRecursively(path)
                         .ignoreFileOnce("fileIgnoredOnce")
