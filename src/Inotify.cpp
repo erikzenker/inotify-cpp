@@ -2,6 +2,11 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
+
+#include <sys/epoll.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 namespace inotify {
 
@@ -15,21 +20,18 @@ Inotify::Inotify()
     , mInotifyFd(0)
     , mOnEventTimeout([](FileSystemEvent) {})
     , mEventBuffer(MAX_EVENTS * (EVENT_SIZE + 16), 0)
-{
-    // Initialize inotify
-    init();
-}
-
-Inotify::~Inotify()
-{
-    if (!close(mInotifyFd)) {
-        mError = errno;
-    }
-}
-
-void Inotify::init()
+    , mPipeReadIdx(0)
+    , mPipeWriteIdx(1)
 {
     mStopped = false;
+
+    if (pipe2(mStopPipeFd, O_NONBLOCK) == -1) {
+        mError = errno;
+        std::stringstream errorStream;
+        errorStream << "Can't initialize stop pipe ! " << strerror(mError) << ".";
+        throw std::runtime_error(errorStream.str());
+    }
+
     mInotifyFd = inotify_init1(IN_NONBLOCK);
     if (mInotifyFd == -1) {
         mError = errno;
@@ -37,6 +39,49 @@ void Inotify::init()
         errorStream << "Can't initialize inotify ! " << strerror(mError) << ".";
         throw std::runtime_error(errorStream.str());
     }
+
+    mEpollFd = epoll_create1(0);
+    if (mEpollFd  == -1) {
+        mError = errno;
+        std::stringstream errorStream;
+        errorStream << "Can't initialize epoll ! " << strerror(mError) << ".";
+        throw std::runtime_error(errorStream.str());
+    }
+
+    mInotifyEpollEvent.events = EPOLLIN | EPOLLET;
+    mInotifyEpollEvent.data.fd = mInotifyFd;
+    if (epoll_ctl(mEpollFd, EPOLL_CTL_ADD, mInotifyFd, &mInotifyEpollEvent) == -1) {
+        mError = errno;
+        std::stringstream errorStream;
+        errorStream << "Can't add inotify filedescriptor to epoll ! " << strerror(mError) << ".";
+        throw std::runtime_error(errorStream.str());
+    }
+
+    mStopPipeEpollEvent.events = EPOLLIN | EPOLLET;
+    mStopPipeEpollEvent.data.fd = mStopPipeFd[mPipeReadIdx];
+    if (epoll_ctl(mEpollFd, EPOLL_CTL_ADD, mStopPipeFd[mPipeReadIdx], &mStopPipeEpollEvent) == -1) {
+        mError = errno;
+        std::stringstream errorStream;
+        errorStream << "Can't add pipe filedescriptor to epoll ! " << strerror(mError) << ".";
+        throw std::runtime_error(errorStream.str());
+    }
+}
+
+Inotify::~Inotify()
+{
+    epoll_ctl(mEpollFd, EPOLL_CTL_DEL, mInotifyFd, 0);
+    epoll_ctl(mEpollFd, EPOLL_CTL_DEL, mStopPipeFd[mPipeReadIdx], 0);
+
+    if (!close(mInotifyFd)) {
+        mError = errno;
+    }
+
+    if (!close(mEpollFd)) {
+        mError = errno;
+    }
+
+    close(mStopPipeFd[mPipeReadIdx]);
+    close(mStopPipeFd[mPipeWriteIdx]);
 }
 
 /**
@@ -170,6 +215,7 @@ uint32_t Inotify::getEventMask()
 void Inotify::setEventTimeout(
     std::chrono::milliseconds eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout)
 {
+    mLastEventTime -= eventTimeout;
     mEventTimeout = eventTimeout;
     mOnEventTimeout = onEventTimeout;
 }
@@ -206,6 +252,13 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
 void Inotify::stop()
 {
     mStopped = true;
+    sendStopSignal();
+}
+
+void Inotify::sendStopSignal()
+{
+    std::vector<std::uint8_t> buf(1,0);
+    write(mStopPipeFd[mPipeWriteIdx], buf.data(), buf.size());
 }
 
 bool Inotify::hasStopped()
@@ -242,14 +295,23 @@ ssize_t Inotify::readEventsIntoBuffer(std::vector<uint8_t>& eventBuffer)
 {
     ssize_t length = 0;
     length = 0;
-    while (length <= 0 && !mStopped) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(mThreadSleep));
+    auto timeout = -1;
+    auto nFdsReady = epoll_wait(mEpollFd, mEpollEvents, MAX_EPOLL_EVENTS, timeout);
 
-        length = read(mInotifyFd, eventBuffer.data(), eventBuffer.size());
+    if (nFdsReady == -1) {
+        return length;
+    }
+
+    for (auto n = 0; n < nFdsReady; ++n) {
+        if (mEpollEvents[n].data.fd == mStopPipeFd[mPipeReadIdx]) {
+            break;
+        }
+
+        length = read(mEpollEvents[n].data.fd, eventBuffer.data(), eventBuffer.size());
         if (length == -1) {
             mError = errno;
-            if (mError != EINTR) {
-                continue;
+            if(mError == EINTR){
+                break;
             }
         }
     }

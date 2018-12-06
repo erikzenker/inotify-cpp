@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include <sys/inotify.h>
+#include <sys/epoll.h>
 #include <time.h>
 #include <vector>
 #include <chrono>
@@ -25,9 +26,9 @@
 
 #include <inotify-cpp/FileSystemEvent.h>
 
-#define MAX_EVENTS     4096
-#define EVENT_SIZE     (sizeof (inotify_event))
-#define EVENT_BUF_LEN  (MAX_EVENTS * (EVENT_SIZE + 16))
+#define MAX_EVENTS       4096
+#define MAX_EPOLL_EVENTS 10
+#define EVENT_SIZE       (sizeof (inotify_event))
 
 namespace fs = boost::filesystem;
 
@@ -91,12 +92,11 @@ private:
   bool isIgnored(std::string file);
   bool isOnTimeout(const std::chrono::steady_clock::time_point &eventTime);
   void removeWatch(int wd);
-  void init();
   ssize_t readEventsIntoBuffer(std::vector<uint8_t>& eventBuffer);
   void readEventsFromBuffer(uint8_t* buffer, int length, std::vector<FileSystemEvent> &events);
   void filterEvents(std::vector<FileSystemEvent>& events, std::queue<FileSystemEvent>& eventQueue);
+  void sendStopSignal();
 
-  // Member
 private:
   int mError;
   std::chrono::milliseconds mEventTimeout;
@@ -109,7 +109,16 @@ private:
   boost::bimap<int, fs::path> mDirectorieMap;
   int mInotifyFd;
   std::atomic<bool> mStopped;
+  int mEpollFd;
+  epoll_event mInotifyEpollEvent;
+  epoll_event mStopPipeEpollEvent;
+  epoll_event mEpollEvents[MAX_EPOLL_EVENTS];
+
   std::function<void(FileSystemEvent)> mOnEventTimeout;
   std::vector<uint8_t> mEventBuffer;
+
+  int mStopPipeFd[2];
+  const int mPipeReadIdx;
+  const int mPipeWriteIdx;
 };
 }
