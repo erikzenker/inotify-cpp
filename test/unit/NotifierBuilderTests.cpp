@@ -247,14 +247,16 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
                             default:
                                 break;
                             case Event::open:
-                                promisedOpen_.set_value(notification);
+                                if (notification.path == recursiveTestFile_) {
+                                    promisedOpen_.set_value(notification);
+                                }
                                 break;
                             }
                         });
 
     std::thread thread([&notifier]() { notifier.runOnce(); });
 
-    openFile(testFile_);
+    openFile(recursiveTestFile_);
 
     auto futureOpen = promisedOpen_.get_future();
     BOOST_CHECK(futureOpen.wait_for(timeout_) == std::future_status::ready);

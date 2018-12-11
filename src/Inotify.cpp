@@ -105,7 +105,7 @@ void Inotify::watchDirectoryRecursively(fs::path path)
             for (; it != end; it.increment(ec)) {
                 fs::path currentPath = *it;
 
-                if (!fs::is_directory(currentPath) || !fs::is_symlink(currentPath)) {
+                if (!fs::is_directory(currentPath) && !fs::is_symlink(currentPath)) {
                     continue;
                 }
 
