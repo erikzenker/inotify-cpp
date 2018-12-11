@@ -47,6 +47,5 @@ target_include_directories(${LIB_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>)
 target_link_libraries(${LIB_NAME}
         PRIVATE
-          Boost::system
-          Boost::filesystem)
+          ${Boost_LIBRARIES})
 add_library(${LIB_COMPANY}::${LIB_NAME} ALIAS ${LIB_NAME})

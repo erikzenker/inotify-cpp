@@ -29,7 +29,5 @@ add_executable(inotify_example main.cpp)
 target_link_libraries(inotify_example
         PRIVATE
         inotify-cpp::inotify-cpp
-        Boost::unit_test_framework
-        Boost::system
-        Boost::filesystem
+        ${Boost_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT})

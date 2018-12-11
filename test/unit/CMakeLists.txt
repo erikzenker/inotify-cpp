@@ -29,9 +29,7 @@ add_executable(inotify_unit_test main.cpp NotifierBuilderTests.cpp EventTests.cp
 target_link_libraries(inotify_unit_test
         PRIVATE
           inotify-cpp::inotify-cpp
-          Boost::unit_test_framework
-          Boost::system
-          Boost::filesystem
+          ${Boost_LIBRARIES}
           ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(NAME inotify_unit_test COMMAND inotify_unit_test)
