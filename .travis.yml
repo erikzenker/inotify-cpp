@@ -15,6 +15,9 @@ script:
 - export CC=gcc
 - export CODECOV_TOKEN="c3d08772-6107-422c-886f-ada5c4780d5c"
 - mkdir build && cd build
+- cmake --version
+- g++ --version
+- cat /usr/include/boost/version.hpp
 - cmake .. -DINOTIFY_GCC_COVERAGE=1
 - cmake --build .
 - ctest -VV
