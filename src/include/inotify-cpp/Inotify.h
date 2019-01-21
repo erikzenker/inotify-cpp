@@ -30,8 +30,6 @@
 #define MAX_EPOLL_EVENTS 10
 #define EVENT_SIZE       (sizeof (inotify_event))
 
-namespace fs = boost::filesystem;
-
 /**
  * @brief C++ wrapper for linux inotify interface
  * @class Inotify
@@ -75,11 +73,11 @@ class Inotify {
  public:
   Inotify();
   ~Inotify();
-  void watchDirectoryRecursively(fs::path path);
-  void watchFile(fs::path file);
-  void unwatchFile(fs::path file);
-  void ignoreFileOnce(fs::path file);
-  void ignoreFile(fs::path file);
+  void watchDirectoryRecursively(boost::filesystem::path path);
+  void watchFile(boost::filesystem::path file);
+  void unwatchFile(boost::filesystem::path file);
+  void ignoreFileOnce(boost::filesystem::path file);
+  void ignoreFile(boost::filesystem::path file);
   void setEventMask(uint32_t eventMask);
   uint32_t getEventMask();
   void setEventTimeout(std::chrono::milliseconds eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout);
@@ -88,7 +86,7 @@ class Inotify {
   bool hasStopped();
 
 private:
-  fs::path wdToPath(int wd);
+  boost::filesystem::path wdToPath(int wd);
   bool isIgnored(std::string file);
   bool isOnTimeout(const std::chrono::steady_clock::time_point &eventTime);
   void removeWatch(int wd);
@@ -106,7 +104,7 @@ private:
   std::vector<std::string> mIgnoredDirectories;
   std::vector<std::string> mOnceIgnoredDirectories;
   std::queue<FileSystemEvent> mEventQueue;
-  boost::bimap<int, fs::path> mDirectorieMap;
+  boost::bimap<int, boost::filesystem::path> mDirectorieMap;
   int mInotifyFd;
   std::atomic<bool> mStopped;
   int mEpollFd;
