@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+namespace fs = boost::filesystem;
+
 namespace inotify {
 
 Inotify::Inotify()
