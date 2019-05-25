@@ -265,21 +265,23 @@ BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
     thread.join();
 }
 
-BOOST_FIXTURE_TEST_CASE(shouldNotTriggerEventsOnWatchRecursively, NotifierBuilderTests)
-{
-    auto notifier = BuildNotifier()
-            .watchPathRecursively(testDirectory_)
-            .onEvent(Event::all, [&](Notification) {
-                BOOST_ASSERT_MSG(false, "Events should not be triggered when watching a directory recursively.");
-            });
+// TODO: Fix by #52
+// BOOST_FIXTURE_TEST_CASE(shouldNotTriggerEventsOnWatchRecursively, NotifierBuilderTests)
+// {
+//     auto notifier = BuildNotifier()
+//             .watchPathRecursively(testDirectory_)
+//             .onEvent(Event::all, [&](Notification) {
+//                 BOOST_ASSERT_MSG(false, "Events should not be triggered when watching a directory
+//                 recursively.");
+//             });
 
-    std::thread thread([&notifier]() { notifier.runOnce(); });
+//     std::thread thread([&notifier]() { notifier.runOnce(); });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+//     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
 
-    notifier.stop();
-    thread.join();
-}
+//     notifier.stop();
+//     thread.join();
+// }
 
 BOOST_FIXTURE_TEST_CASE(shouldWatchCreatedFile, NotifierBuilderTests)
 {
