@@ -103,7 +103,7 @@ cmake --build inotify_example
    + c++11
    + linux 2.6.13
  + build
-   + cmake 3.5   
+   + cmake 3.8  
 
 ## Licence
 MIT
