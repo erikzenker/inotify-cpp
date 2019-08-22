@@ -27,7 +27,13 @@
 #include <inotify-cpp/FileSystemEvent.h>
 
 #define MAX_EVENTS       4096
-#define MAX_EPOLL_EVENTS 10
+/**
+ * MAX_EPOLL_EVENTS is set to 1 since there exists
+ * only one eventbuffer. The value can be increased
+ * when readEventsIntoBuffer can handle multiple 
+ * epoll events.
+ */
+#define MAX_EPOLL_EVENTS 1
 #define EVENT_SIZE       (sizeof (inotify_event))
 
 /**
