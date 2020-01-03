@@ -135,13 +135,16 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnAllEvents, NotifierBuilderTests)
 
 BOOST_FIXTURE_TEST_CASE(shouldNotifyOnCombinedEvent, NotifierBuilderTests)
 {
-    auto notifier = BuildNotifier().watchFile(testFile_).onEvent(
-        Event::close_nowrite | Event::close,
-        [&](Notification notification) { promisedCombinedEvent_.set_value(notification); });
+    auto notifier
+        = BuildNotifier()
+              .watchPathRecursively(testDirectory_)
+              .onEvent(Event::close_nowrite | Event::is_dir, [&](Notification notification) {
+                  promisedCombinedEvent_.set_value(notification);
+              });
 
     std::thread thread([&notifier]() { notifier.run(); });
 
-    openFile(testFile_);
+    boost::filesystem::create_directories(testDirectory_ / "test");
 
     auto futureCombinedEvent = promisedCombinedEvent_.get_future();
     BOOST_CHECK(futureCombinedEvent.wait_for(timeout_) == std::future_status::ready);

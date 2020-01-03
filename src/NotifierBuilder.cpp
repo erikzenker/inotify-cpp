@@ -1,3 +1,4 @@
+
 #include <inotify-cpp/NotifierBuilder.h>
 
 namespace inotify {
@@ -101,7 +102,13 @@ auto NotifierBuilder::runOnce() -> void
     for (auto& eventAndEventObserver : mEventObserver) {
         auto& event = eventAndEventObserver.first;
         auto& eventObserver = eventAndEventObserver.second;
-        if (inotify::containsEvent(event, currentEvent)) {
+
+        if (event == Event::all) {
+            eventObserver(notification);
+            return;
+        }
+
+        if (event == currentEvent) {
             eventObserver(notification);
             return;
         }
