@@ -18,5 +18,5 @@ BOOST_AUTO_TEST_CASE(shouldOutputEventsCorrectly)
 {
     std::stringstream eventSStream;
     eventSStream << Event::close;
-    BOOST_CHECK_EQUAL("close_write close_nowrite close ", eventSStream.str());
+    BOOST_CHECK_EQUAL("close (close_write  | close_nowrite) ", eventSStream.str());
 }
