@@ -23,11 +23,6 @@ void createFile(const boost::filesystem::path& file)
     boost::filesystem::ofstream stream(file);
 }
 
-void removeFile(const boost::filesystem::path& file)
-{
-    boost::filesystem::remove(file);
-}
-
 struct NotifierBuilderTests {
     NotifierBuilderTests()
         : testDirectory_("testDirectory")
@@ -40,13 +35,14 @@ struct NotifierBuilderTests {
         boost::filesystem::create_directories(testDirectory_);
         boost::filesystem::create_directories(recursiveTestDirectory_);
 
-        removeFile(testFile_);
-        removeFile(recursiveTestFile_);
-        removeFile(createdFile_);
         createFile(testFile_);
         createFile(recursiveTestFile_);
     }
-    ~NotifierBuilderTests() = default;
+
+    ~NotifierBuilderTests()
+    {
+        boost::filesystem::remove_all(testDirectory_);
+    }
 
     boost::filesystem::path testDirectory_;
     boost::filesystem::path recursiveTestDirectory_;
@@ -135,14 +131,13 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnAllEvents, NotifierBuilderTests)
 
 BOOST_FIXTURE_TEST_CASE(shouldNotifyOnCombinedEvent, NotifierBuilderTests)
 {
-    auto notifier
-        = BuildNotifier()
-              .watchPathRecursively(testDirectory_)
-              .onEvent(Event::close_nowrite | Event::is_dir, [&](Notification notification) {
-                  promisedCombinedEvent_.set_value(notification);
-              });
+    auto notifier = BuildNotifier()
+                        .watchPathRecursively(testDirectory_)
+                        .onEvent(Event::create | Event::is_dir, [&](Notification notification) {
+                            promisedCombinedEvent_.set_value(notification);
+                        });
 
-    std::thread thread([&notifier]() { notifier.run(); });
+    std::thread thread([&notifier]() { notifier.runOnce(); });
 
     boost::filesystem::create_directories(testDirectory_ / "test");
 
