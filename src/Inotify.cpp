@@ -335,7 +335,10 @@ void Inotify::readEventsFromBuffer(
             continue;
         }
 
-        auto path = wdToPath(event->wd) / std::string(event->name);
+        fs::path path = wdToPath(event->wd);
+	if (fs::is_directory(path)) { 
+            path = path / std::string(event->name);
+        }
 
         if (fs::is_directory(path)) {
             event->mask |= IN_ISDIR;
