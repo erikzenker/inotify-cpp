@@ -22,6 +22,7 @@ macro(configure_target target)
         set_target_properties(${target} PROPERTIES
                 LINKER_LANGUAGE CXX
                 OUTPUT_NAME ${LIB_NAME}
+                SOVERSION ${PROJECT_VERSION}
         )
 
         install(TARGETS ${target} EXPORT ${target}Targets
