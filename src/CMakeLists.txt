@@ -9,7 +9,7 @@ set(LIB_HEADER
         include/inotify-cpp/Notification.h)
 
 cmake_minimum_required(VERSION 3.8)
-project(${LIB_NAME} VERSION 0.0.1)
+project(${LIB_NAME} VERSION 0.2.0)
 
 # dependencies
 find_package(
