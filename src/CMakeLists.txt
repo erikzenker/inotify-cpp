@@ -10,6 +10,7 @@ set(LIB_HEADER
 
 cmake_minimum_required(VERSION 3.8)
 project(${LIB_NAME} VERSION 0.2.0)
+include(GNUInstallDirs)
 
 # dependencies
 find_package(
@@ -26,12 +27,12 @@ macro(configure_target target)
         )
 
         install(TARGETS ${target} EXPORT ${target}Targets
-                LIBRARY DESTINATION lib
-                ARCHIVE DESTINATION lib
-                RUNTIME DESTINATION bin
-                INCLUDES DESTINATION include)
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+                INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
         install(EXPORT ${target}Targets
-                DESTINATION lib/cmake/${LIB_NAME}
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${LIB_NAME}
                 FILE ${target}Targets.cmake
                 NAMESPACE ${LIB_COMPANY}::)
 
@@ -64,11 +65,10 @@ if(BUILD_SHARED_LIBS AND BUILD_STATIC_LIBS)
         add_library(${LIB_COMPANY}::${LIB_NAME} ALIAS ${LIB_NAME}-shared)
 endif()
 
-install(DIRECTORY include/${LIB_NAME}
-        DESTINATION include)
+install(DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR}/${LIB_NAME} DESTINATION include)
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(${LIB_NAME}ConfigVersion.cmake
         COMPATIBILITY SameMajorVersion)
 install(FILES ${LIB_NAME}Config.cmake ${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}ConfigVersion.cmake
-        DESTINATION lib/cmake/${LIB_NAME})
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${LIB_NAME})
