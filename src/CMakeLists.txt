@@ -18,20 +18,49 @@ find_package(
         REQUIRED
 )
 
+macro(configure_target target)
+        set_target_properties(${target} PROPERTIES
+                LINKER_LANGUAGE CXX
+                OUTPUT_NAME ${LIB_NAME}
+        )
+
+        install(TARGETS ${target} EXPORT ${target}Targets
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib
+                RUNTIME DESTINATION bin
+                INCLUDES DESTINATION include)
+        install(EXPORT ${target}Targets
+                DESTINATION lib/cmake/${LIB_NAME}
+                FILE ${target}Targets.cmake
+                NAMESPACE ${LIB_COMPANY}::)
+
+        target_compile_features(${target} PUBLIC cxx_std_11)
+        target_include_directories(${target} PUBLIC
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                $<INSTALL_INTERFACE:include>)
+        target_link_libraries(${target}
+                INTERFACE Boost::system Boost::filesystem)
+endmacro(configure_target target)
+
 # library definition
-add_library(${LIB_NAME} SHARED ${LIB_SRCS} ${LIB_HEADER})
+if(BUILD_SHARED_LIBS)
+        add_library(${LIB_NAME}-shared SHARED ${LIB_SRCS} ${LIB_HEADER})
+        if(NOT BUILD_STATIC_LIBS)
+                add_library(${LIB_COMPANY}::${LIB_NAME} ALIAS ${LIB_NAME}-shared)
+        endif()
+endif()
 
-set_target_properties(${LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+if(BUILD_STATIC_LIBS)
+        add_library(${LIB_NAME}-static STATIC ${LIB_SRCS} ${LIB_HEADER})
+        if(NOT BUILD_SHARED_LIBS)
+                add_library(${LIB_COMPANY}::${LIB_NAME} ALIAS ${LIB_NAME}-static)
+        endif()
+endif()
 
-install(TARGETS ${LIB_NAME} EXPORT ${LIB_NAME}Targets
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include)
-install(EXPORT ${LIB_NAME}Targets
-        DESTINATION lib/cmake/${LIB_NAME}
-        FILE ${LIB_NAME}Targets.cmake
-        NAMESPACE ${LIB_COMPANY}::)
+if(BUILD_SHARED_LIBS AND BUILD_STATIC_LIBS)
+        add_library(${LIB_COMPANY}::${LIB_NAME} ALIAS ${LIB_NAME}-shared)
+endif()
+
 install(DIRECTORY include/${LIB_NAME}
         DESTINATION include)
 
@@ -40,13 +69,3 @@ write_basic_package_version_file(${LIB_NAME}ConfigVersion.cmake
         COMPATIBILITY SameMajorVersion)
 install(FILES ${LIB_NAME}Config.cmake ${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}ConfigVersion.cmake
         DESTINATION lib/cmake/${LIB_NAME})
-
-target_compile_features(${LIB_NAME} PUBLIC cxx_std_11)
-target_include_directories(${LIB_NAME} PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-target_link_libraries(${LIB_NAME}
-        INTERFACE
-          Boost::system
-          Boost::filesystem)
-add_library(${LIB_COMPANY}::${LIB_NAME} ALIAS ${LIB_NAME})
