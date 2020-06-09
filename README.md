@@ -1,5 +1,5 @@
 # Inotify-cpp #
-![C/C++ CI](https://github.com/erikzenker/inotify-cpp/workflows/C/C++%20CI/badge.svg) [![Coverity Scan Build Status](https://scan.coverity.com/projects/14692/badge.svg)](https://scan.coverity.com/projects/erikzenker-inotify-cpp) [![codecov](https://codecov.io/gh/erikzenker/inotify-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/erikzenker/inotify-cpp) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/erikzenker)
+![Build and Test](https://github.com/erikzenker/inotify-cpp/workflows/Build%20and%20Test/badge.svg) [![codecov](https://codecov.io/gh/erikzenker/inotify-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/erikzenker/inotify-cpp) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/erikzenker)
 ===========
 
 __Inotify-cpp__ is a C++ wrapper for linux inotify. It lets you watch for
