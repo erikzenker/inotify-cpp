@@ -1,0 +1,38 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-16.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies
+      run: sudo apt install cmake libboost-filesystem-dev libboost-test-dev gcc
+    - name: Print System Information
+      run: |
+        cmake --version
+        g++ --version
+        cat /usr/include/boost/version.hpp
+    - name: Build
+      run: |
+        export CXX=g++
+        export CC=gcc
+        mkdir build && cd build
+        cmake .. -DINOTIFY_GCC_COVERAGE=1
+        cmake --build .
+    - name: Test
+      run: |
+        cd build
+        ctest -VV
+    - name: Generate Coverage Report
+      run: |
+        cd build
+        export CODECOV_TOKEN="c3d08772-6107-422c-886f-ada5c4780d5c"
+        bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
