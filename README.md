@@ -71,26 +71,25 @@ int main(int argc, char** argv)
 }
   ```
   
-## Build Library ##
+## Build and Install Library ##
 ```bash
 mkdir build; cd bulid
-cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr ..
 cmake --build .
 
 # run tests
 ctest -VV
 
 # install the library
-make install
+cmake --build . --target install
 ```
 
 ## Build Example ##
-Build and install the library before you run the following commands:
 ```bash
 mkdir build; cd build
-cmake ../example
-cmake --build inotify_example
-./inotify_example
+cmake ..
+cmake --build . --target inotify_example
+./example/inotify_example
 ```
 
 ## Install from Packet ##
