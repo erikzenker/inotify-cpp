@@ -100,6 +100,8 @@ void Inotify::watchDirectoryRecursively(fs::path path)
     std::vector<boost::filesystem::path> paths;
 
     if (fs::exists(path)) {
+        paths.push_back(path);
+
         if (fs::is_directory(path)) {
             boost::system::error_code ec;
             fs::recursive_directory_iterator it(path, fs::symlink_option::recurse, ec);
@@ -115,7 +117,6 @@ void Inotify::watchDirectoryRecursively(fs::path path)
                 paths.push_back(currentPath);
             }
         }
-        paths.push_back(path);
     } else {
         throw std::invalid_argument(
             "Can´t watch Path! Path does not exist. Path: " + path.string());
