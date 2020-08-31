@@ -1,0 +1,32 @@
+name: Example
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-16.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies
+      run: sudo apt install cmake libboost-filesystem-dev libboost-test-dev gcc
+    - name: Print System Information
+      run: |
+        cmake --version
+        g++ --version
+        cat /usr/include/boost/version.hpp
+    - name: Build
+      run: |
+        export CXX=g++
+        export CC=gcc
+        mkdir build && cd build
+        cmake .. 
+        cmake --build . --target inotify_example
+    - name: Run example
+      run: |
+        ./build/example/inotify_example
