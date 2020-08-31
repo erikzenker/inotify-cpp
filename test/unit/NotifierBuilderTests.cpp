@@ -235,52 +235,56 @@ BOOST_FIXTURE_TEST_CASE(shouldIgnoreFile, NotifierBuilderTests)
     thread.join();
 }
 
-// TODO: Test is flaky, fix by #52
-// BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
-// {
+// This test might fail on dev machines when editors trigger events by indexing the build directory
+BOOST_FIXTURE_TEST_CASE(shouldWatchPathRecursively, NotifierBuilderTests)
+{
 
-//     auto notifier = BuildNotifier()
-//                         .watchPathRecursively(testDirectory_)
-//                         .onEvent(Event::open, [&](Notification notification) {
-//                             switch (notification.event) {
-//                             default:
-//                                 break;
-//                             case Event::open:
-//                                 if (notification.path == recursiveTestFile_) {
-//                                     promisedOpen_.set_value(notification);
-//                                 }
-//                                 break;
-//                             }
-//                         });
+    auto notifier = BuildNotifier()
+                        .watchPathRecursively(testDirectory_)
+                        .onEvent(Event::open, [&](Notification notification) {
+                            switch (notification.event) {
+                            default:
+                                break;
+                            case Event::open:
+                                if (notification.path == recursiveTestFile_) {
+                                    promisedOpen_.set_value(notification);
+                                }
+                                break;
+                            }
+                        });
 
-//     std::thread thread([&notifier]() { notifier.runOnce(); });
+    std::thread thread([&notifier]() { notifier.runOnce(); });
 
-//     openFile(recursiveTestFile_);
+    openFile(recursiveTestFile_);
 
-//     auto futureOpen = promisedOpen_.get_future();
-//     BOOST_CHECK(futureOpen.wait_for(timeout_) == std::future_status::ready);
+    auto futureOpen = promisedOpen_.get_future();
+    BOOST_CHECK(futureOpen.wait_for(timeout_) == std::future_status::ready);
 
-//     notifier.stop();
-//     thread.join();
-// }
+    notifier.stop();
+    thread.join();
+}
 
-// TODO: Fix by #52
-// BOOST_FIXTURE_TEST_CASE(shouldNotTriggerEventsOnWatchRecursively, NotifierBuilderTests)
-// {
-//     auto notifier = BuildNotifier()
-//             .watchPathRecursively(testDirectory_)
-//             .onEvent(Event::all, [&](Notification) {
-//                 BOOST_ASSERT_MSG(false, "Events should not be triggered when watching a directory
-//                 recursively.");
-//             });
+// This test might fail on dev machines when editors trigger events by indexing the build directory
+BOOST_FIXTURE_TEST_CASE(shouldNotTriggerEventsOnWatchRecursively, NotifierBuilderTests)
+{
+    auto notifier
+        = BuildNotifier()
+              .watchPathRecursively(testDirectory_)
+              .onEvent(Event::all, [&](Notification notification) {
+                  std::cout << "event:" << notification.path << " " << notification.event
+                            << std::endl;
+                  BOOST_ASSERT_MSG(
+                      false,
+                      "Events should not be triggered when watching a directory recursively.");
+              });
 
-//     std::thread thread([&notifier]() { notifier.runOnce(); });
+    std::thread thread([&notifier]() { notifier.run(); });
 
-//     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    std::this_thread::sleep_for(std::chrono::milliseconds { 1000 });
 
-//     notifier.stop();
-//     thread.join();
-// }
+    notifier.stop();
+    thread.join();
+}
 
 BOOST_FIXTURE_TEST_CASE(shouldWatchCreatedFile, NotifierBuilderTests)
 {
