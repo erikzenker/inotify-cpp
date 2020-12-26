@@ -21,9 +21,10 @@ jobs:
         g++ --version
         cat /usr/include/boost/version.hpp
     - name: Build
+      env:
+        CXX: g++
+        CC: gcc
       run: |
-        export CXX=g++
-        export CC=gcc
         mkdir build && cd build
         cmake .. -DINOTIFY_GCC_COVERAGE=1
         cmake --build .
@@ -32,7 +33,8 @@ jobs:
         cd build
         ctest -VV
     - name: Generate Coverage Report
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
         cd build
-        export CODECOV_TOKEN="c3d08772-6107-422c-886f-ada5c4780d5c"
         bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
