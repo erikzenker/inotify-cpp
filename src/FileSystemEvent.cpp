@@ -6,7 +6,7 @@ namespace inotify {
 FileSystemEvent::FileSystemEvent(
     const int wd,
     uint32_t mask,
-    const boost::filesystem::path& path,
+    const std::filesystem::path& path,
     const std::chrono::steady_clock::time_point& eventTime)
     : wd(wd)
     , mask(mask)

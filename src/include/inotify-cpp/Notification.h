@@ -2,7 +2,7 @@
 
 #include <inotify-cpp/Event.h>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #include <chrono>
 
@@ -12,12 +12,12 @@ class Notification {
   public:
     Notification(
         const Event& event,
-        const boost::filesystem::path& path,
+        const std::filesystem::path& path,
         std::chrono::steady_clock::time_point time);
 
   public:
     const Event event;
-    const boost::filesystem::path path;
+    const std::filesystem::path path;
     const std::chrono::steady_clock::time_point time;
 };
 }

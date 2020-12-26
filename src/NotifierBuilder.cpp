@@ -13,31 +13,31 @@ NotifierBuilder BuildNotifier()
     return {};
 }
 
-auto NotifierBuilder::watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&
+auto NotifierBuilder::watchPathRecursively(std::filesystem::path path) -> NotifierBuilder&
 {
     mInotify->watchDirectoryRecursively(path);
     return *this;
 }
 
-auto NotifierBuilder::watchFile(boost::filesystem::path file) -> NotifierBuilder&
+auto NotifierBuilder::watchFile(std::filesystem::path file) -> NotifierBuilder&
 {
     mInotify->watchFile(file);
     return *this;
 }
 
-auto NotifierBuilder::unwatchFile(boost::filesystem::path file) -> NotifierBuilder&
+auto NotifierBuilder::unwatchFile(std::filesystem::path file) -> NotifierBuilder&
 {
     mInotify->unwatchFile(file);
     return *this;
 }
 
-auto NotifierBuilder::ignoreFileOnce(boost::filesystem::path file) -> NotifierBuilder&
+auto NotifierBuilder::ignoreFileOnce(std::filesystem::path file) -> NotifierBuilder&
 {
     mInotify->ignoreFileOnce(file.string());
     return *this;
 }
 
-auto NotifierBuilder::ignoreFile(boost::filesystem::path file) -> NotifierBuilder&
+auto NotifierBuilder::ignoreFile(std::filesystem::path file) -> NotifierBuilder&
 {
     mInotify->ignoreFile(file.string());
     return *this;
