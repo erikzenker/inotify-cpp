@@ -21,9 +21,10 @@ jobs:
         g++ --version
         cat /usr/include/boost/version.hpp
     - name: Build
+      env:
+        CXX: g++
+        CC: gcc
       run: |
-        export CXX=g++
-        export CC=gcc
         mkdir build && cd build
         cmake .. -DBUILD_TEST=OFF
         cmake --build . --target inotify_example
