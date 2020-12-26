@@ -13,7 +13,7 @@ endif()
 ###############################################################################
 find_package(
         Boost 1.54.0
-        COMPONENTS unit_test_framework system filesystem
+        COMPONENTS unit_test_framework
         REQUIRED
 )
 
@@ -26,12 +26,11 @@ find_package(Threads)
 # Test
 ###############################################################################
 add_executable(inotify_unit_test main.cpp NotifierBuilderTests.cpp EventTests.cpp)
+target_compile_features(inotify_unit_test PRIVATE cxx_std_17)
 target_link_libraries(inotify_unit_test
         PRIVATE
           inotify-cpp::inotify-cpp
           Boost::unit_test_framework
-          Boost::system
-          Boost::filesystem
           ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(NAME inotify_unit_test COMMAND inotify_unit_test)

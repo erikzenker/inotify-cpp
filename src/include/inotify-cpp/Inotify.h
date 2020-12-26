@@ -6,23 +6,23 @@
  **/
 #pragma once
 #include <assert.h>
-#include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
+#include <atomic>
 #include <boost/bimap.hpp>
+#include <chrono>
 #include <errno.h>
 #include <exception>
+#include <filesystem>
 #include <map>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <sstream>
 #include <string>
-#include <sys/inotify.h>
 #include <sys/epoll.h>
+#include <sys/inotify.h>
+#include <thread>
 #include <time.h>
 #include <vector>
-#include <chrono>
-#include <thread>
-#include <atomic>
 
 #include <inotify-cpp/FileSystemEvent.h>
 
@@ -79,20 +79,20 @@ class Inotify {
  public:
   Inotify();
   ~Inotify();
-  void watchDirectoryRecursively(boost::filesystem::path path);
-  void watchFile(boost::filesystem::path file);
-  void unwatchFile(boost::filesystem::path file);
-  void ignoreFileOnce(boost::filesystem::path file);
-  void ignoreFile(boost::filesystem::path file);
+  void watchDirectoryRecursively(std::filesystem::path path);
+  void watchFile(std::filesystem::path file);
+  void unwatchFile(std::filesystem::path file);
+  void ignoreFileOnce(std::filesystem::path file);
+  void ignoreFile(std::filesystem::path file);
   void setEventMask(uint32_t eventMask);
   uint32_t getEventMask();
   void setEventTimeout(std::chrono::milliseconds eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout);
-  boost::optional<FileSystemEvent> getNextEvent();
+  std::optional<FileSystemEvent> getNextEvent();
   void stop();
   bool hasStopped();
 
 private:
-  boost::filesystem::path wdToPath(int wd);
+  std::filesystem::path wdToPath(int wd);
   bool isIgnored(std::string file);
   bool isOnTimeout(const std::chrono::steady_clock::time_point &eventTime);
   void removeWatch(int wd);
@@ -110,7 +110,7 @@ private:
   std::vector<std::string> mIgnoredDirectories;
   std::vector<std::string> mOnceIgnoredDirectories;
   std::queue<FileSystemEvent> mEventQueue;
-  boost::bimap<int, boost::filesystem::path> mDirectorieMap;
+  boost::bimap<int, std::filesystem::path> mDirectorieMap;
   int mInotifyFd;
   std::atomic<bool> mStopped;
   int mEpollFd;

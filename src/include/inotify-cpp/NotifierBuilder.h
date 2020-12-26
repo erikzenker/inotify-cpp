@@ -3,7 +3,7 @@
 #include <inotify-cpp/Inotify.h>
 #include <inotify-cpp/Notification.h>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #include <memory>
 #include <string>
@@ -19,11 +19,11 @@ class NotifierBuilder {
     auto run() -> void;
     auto runOnce() -> void;
     auto stop() -> void;
-    auto watchPathRecursively(boost::filesystem::path path) -> NotifierBuilder&;
-    auto watchFile(boost::filesystem::path file) -> NotifierBuilder&;
-    auto unwatchFile(boost::filesystem::path file) -> NotifierBuilder&;
-    auto ignoreFileOnce(boost::filesystem::path file) -> NotifierBuilder&;
-    auto ignoreFile(boost::filesystem::path file) -> NotifierBuilder&;
+    auto watchPathRecursively(std::filesystem::path path) -> NotifierBuilder&;
+    auto watchFile(std::filesystem::path file) -> NotifierBuilder&;
+    auto unwatchFile(std::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFileOnce(std::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFile(std::filesystem::path file) -> NotifierBuilder&;
     auto onEvent(Event event, EventObserver) -> NotifierBuilder&;
     auto onEvents(std::vector<Event> event, EventObserver) -> NotifierBuilder&;
     auto onUnexpectedEvent(EventObserver) -> NotifierBuilder&;

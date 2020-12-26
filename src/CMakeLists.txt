@@ -15,7 +15,6 @@ include(GNUInstallDirs)
 # dependencies
 find_package(
         Boost 1.54.0
-        COMPONENTS system filesystem
         REQUIRED
 )
 
@@ -40,8 +39,7 @@ macro(configure_target target)
         target_include_directories(${target} PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>)
-        target_link_libraries(${target}
-                INTERFACE Boost::system Boost::filesystem)
+        target_compile_features(${target} PRIVATE cxx_std_17)
 endmacro(configure_target target)
 
 # library definition

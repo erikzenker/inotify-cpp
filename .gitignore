@@ -10,3 +10,4 @@ install_manifest.txt
 .idea/
 **/build/
 cmake-build-debug/
+.vscode

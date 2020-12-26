@@ -1,15 +1,16 @@
 
 #include <inotify-cpp/Inotify.h>
 
+#include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include <sys/epoll.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 namespace inotify {
 
@@ -97,14 +98,15 @@ Inotify::~Inotify()
  */
 void Inotify::watchDirectoryRecursively(fs::path path)
 {
-    std::vector<boost::filesystem::path> paths;
+    std::vector<std::filesystem::path> paths;
 
     if (fs::exists(path)) {
         paths.push_back(path);
 
         if (fs::is_directory(path)) {
-            boost::system::error_code ec;
-            fs::recursive_directory_iterator it(path, fs::symlink_option::recurse, ec);
+            std::error_code ec;
+            fs::recursive_directory_iterator it(
+                path, fs::directory_options::follow_directory_symlink, ec);
             fs::recursive_directory_iterator end;
 
             for (; it != end; it.increment(ec)) {
@@ -234,7 +236,7 @@ void Inotify::setEventTimeout(
  * @return A new FileSystemEvent
  *
  */
-boost::optional<FileSystemEvent> Inotify::getNextEvent()
+std::optional<FileSystemEvent> Inotify::getNextEvent()
 {
     std::vector<FileSystemEvent> newEvents;
 
@@ -245,7 +247,7 @@ boost::optional<FileSystemEvent> Inotify::getNextEvent()
     }
 
     if (mStopped) {
-        return boost::none;
+        return std::nullopt;
     }
 
     auto event = mEventQueue.front();

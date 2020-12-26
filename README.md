@@ -11,7 +11,7 @@ the implementation of a simple filesystem event watcher for the commandline.
   ```c++
 #include <inotify-cpp/NotifierBuilder.h>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #include <iostream>
 #include <thread>
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     }
 
     // Parse the directory to watch
-    boost::filesystem::path path(argv[1]);
+    std::filesystem::path path(argv[1]);
 
     // Set the event handler which will be used to process particular events
     auto handleNotification = [&](Notification notification) {
@@ -98,7 +98,7 @@ cmake --build . --target inotify_example
 ## Dependencies ##
  + lib
    + boost 1.54.0
-   + c++11
+   + c++17
    + linux 2.6.13
  + build
    + cmake 3.8  
