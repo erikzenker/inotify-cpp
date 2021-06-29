@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   
 ## Build and Install Library ##
 ```bash
-mkdir build; cd bulid
+mkdir build; cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr ..
 cmake --build .
 
