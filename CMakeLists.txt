@@ -6,6 +6,17 @@ option(BUILD_TEST "Build inotify-cpp unittest program" ON)
 option(BUILD_SHARED_LIBS "Build inotify-cpp as a shared library" ON)
 option(BUILD_STATIC_LIBS "Build inotify-cpp as a static library" OFF)
 
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    message(FATAL_ERROR "conanbuildinfo.cmake required is missing")
+endif()
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup(TARGETS)
+
 add_subdirectory(src)
 
 if(BUILD_EXAMPLE)

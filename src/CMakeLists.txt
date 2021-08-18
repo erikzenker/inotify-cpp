@@ -12,12 +12,6 @@ cmake_minimum_required(VERSION 3.8)
 project(${LIB_NAME} VERSION 0.2.0)
 include(GNUInstallDirs)
 
-# dependencies
-find_package(
-        Boost 1.54.0
-        REQUIRED
-)
-
 macro(configure_target target)
         set_target_properties(${target} PROPERTIES
                 LINKER_LANGUAGE CXX

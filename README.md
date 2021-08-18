@@ -87,6 +87,7 @@ cmake --build . --target install
 ## Build Example ##
 ```bash
 mkdir build; cd build
+conan install .. -b missing -s build_type=Debug
 cmake ..
 cmake --build . --target inotify_example
 ./example/inotify_example
