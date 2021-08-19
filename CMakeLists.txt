@@ -1,10 +1,33 @@
 cmake_minimum_required(VERSION 3.8)
 project(inotify-cpp)
 
+if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(BUILD_EXAMPLE "Build inotify-cpp example program" ON)
 option(BUILD_TEST "Build inotify-cpp unittest program" ON)
 option(BUILD_SHARED_LIBS "Build inotify-cpp as a shared library" ON)
 option(BUILD_STATIC_LIBS "Build inotify-cpp as a static library" OFF)
+option(USE_BOOST_FILESYSTEM "Build with boost::filesystem" OFF)
+
+if(USE_BOOST_FILESYSTEM)
+    list(APPEND USED_BOOST_LIBS filesystem)
+endif()
+if(BUILD_TEST)
+    list(APPEND USED_BOOST_LIBS unit_test_framework)
+endif()
+
+find_package(Boost 1.54.0 COMPONENTS ${USED_BOOST_LIBS} REQUIRED)
+
+add_library(inotify-filesystem-adapter INTERFACE)
+if(CMAKE_CXX_STANDARD LESS 17 OR USE_BOOST_FILESYSTEM)
+    add_definitions(-DUSE_BOOST_FILESYSTEM)
+    target_link_libraries(inotify-filesystem-adapter INTERFACE Boost::filesystem)
+else()
+    target_link_libraries(inotify-filesystem-adapter INTERFACE stdc++fs)
+endif()
 
 add_subdirectory(src)
 
@@ -26,4 +49,6 @@ message(STATUS "  Build shared libs  .............. : ${BUILD_SHARED_LIBS}")
 message(STATUS "  Build static libs  .............. : ${BUILD_STATIC_LIBS}")
 message(STATUS "  Build example  .................. : ${BUILD_EXAMPLE}")
 message(STATUS "  Build test ...................... : ${BUILD_TEST}")
+message(STATUS "  Build c++ standard .............. : ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Build with boost::filesystem .... : ${USE_BOOST_FILESYSTEM}")
 message(STATUS "")
