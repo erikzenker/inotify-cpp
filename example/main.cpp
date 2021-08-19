@@ -15,7 +15,7 @@ int main(int argc, char** argv)
     }
 
     // Parse the directory to watch
-    stdx::filesystem::path path(argv[1]);
+    inotifypp::filesystem::path path(argv[1]);
 
     // Set the event handler which will be used to process particular events
     auto handleNotification = [&](Notification notification) {

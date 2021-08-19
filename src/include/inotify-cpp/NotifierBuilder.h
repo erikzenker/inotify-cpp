@@ -18,11 +18,11 @@ class NotifierBuilder {
     auto run() -> void;
     auto runOnce() -> void;
     auto stop() -> void;
-    auto watchPathRecursively(stdx::filesystem::path path) -> NotifierBuilder&;
-    auto watchFile(stdx::filesystem::path file) -> NotifierBuilder&;
-    auto unwatchFile(stdx::filesystem::path file) -> NotifierBuilder&;
-    auto ignoreFileOnce(stdx::filesystem::path file) -> NotifierBuilder&;
-    auto ignoreFile(stdx::filesystem::path file) -> NotifierBuilder&;
+    auto watchPathRecursively(inotifypp::filesystem::path path) -> NotifierBuilder&;
+    auto watchFile(inotifypp::filesystem::path file) -> NotifierBuilder&;
+    auto unwatchFile(inotifypp::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFileOnce(inotifypp::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFile(inotifypp::filesystem::path file) -> NotifierBuilder&;
     auto onEvent(Event event, EventObserver) -> NotifierBuilder&;
     auto onEvents(std::vector<Event> event, EventObserver) -> NotifierBuilder&;
     auto onUnexpectedEvent(EventObserver) -> NotifierBuilder&;

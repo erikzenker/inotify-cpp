@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace fs = stdx::filesystem;
+namespace fs = inotifypp::filesystem;
 
 namespace inotify {
 
@@ -103,7 +103,7 @@ void Inotify::watchDirectoryRecursively(fs::path path)
         paths.push_back(path);
 
         if (fs::is_directory(path)) {
-            stdx::error_code ec;
+            inotifypp::error_code ec;
             fs::recursive_directory_iterator it(
                 path, fs::directory_options::follow_directory_symlink, ec);
             fs::recursive_directory_iterator end;
@@ -235,7 +235,7 @@ void Inotify::setEventTimeout(
  * @return A new FileSystemEvent
  *
  */
-stdx::optional<FileSystemEvent> Inotify::getNextEvent()
+inotifypp::optional<FileSystemEvent> Inotify::getNextEvent()
 {
     std::vector<FileSystemEvent> newEvents;
 
@@ -246,7 +246,7 @@ stdx::optional<FileSystemEvent> Inotify::getNextEvent()
     }
 
     if (mStopped) {
-        return stdx::nullopt();
+        return inotifypp::nullopt();
     }
 
     auto event = mEventQueue.front();

@@ -10,7 +10,7 @@ class FileSystemEvent {
     FileSystemEvent(
         int wd,
         uint32_t mask,
-        const stdx::filesystem::path& path,
+        const inotifypp::filesystem::path& path,
         const std::chrono::steady_clock::time_point& eventTime);
 
     ~FileSystemEvent();
@@ -18,7 +18,7 @@ class FileSystemEvent {
   public:
     int wd;
     uint32_t mask;
-    stdx::filesystem::path path;
+    inotifypp::filesystem::path path;
     std::chrono::steady_clock::time_point eventTime;
 };
 }

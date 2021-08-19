@@ -78,20 +78,20 @@ class Inotify {
  public:
   Inotify();
   ~Inotify();
-  void watchDirectoryRecursively(stdx::filesystem::path path);
-  void watchFile(stdx::filesystem::path file);
-  void unwatchFile(stdx::filesystem::path file);
-  void ignoreFileOnce(stdx::filesystem::path file);
-  void ignoreFile(stdx::filesystem::path file);
+  void watchDirectoryRecursively(inotifypp::filesystem::path path);
+  void watchFile(inotifypp::filesystem::path file);
+  void unwatchFile(inotifypp::filesystem::path file);
+  void ignoreFileOnce(inotifypp::filesystem::path file);
+  void ignoreFile(inotifypp::filesystem::path file);
   void setEventMask(uint32_t eventMask);
   uint32_t getEventMask();
   void setEventTimeout(std::chrono::milliseconds eventTimeout, std::function<void(FileSystemEvent)> onEventTimeout);
-  stdx::optional<FileSystemEvent> getNextEvent();
+  inotifypp::optional<FileSystemEvent> getNextEvent();
   void stop();
   bool hasStopped();
 
 private:
-  stdx::filesystem::path wdToPath(int wd);
+  inotifypp::filesystem::path wdToPath(int wd);
   bool isIgnored(std::string file);
   bool isOnTimeout(const std::chrono::steady_clock::time_point &eventTime);
   void removeWatch(int wd);
@@ -109,7 +109,7 @@ private:
   std::vector<std::string> mIgnoredDirectories;
   std::vector<std::string> mOnceIgnoredDirectories;
   std::queue<FileSystemEvent> mEventQueue;
-  boost::bimap<int, stdx::filesystem::path> mDirectorieMap;
+  boost::bimap<int, inotifypp::filesystem::path> mDirectorieMap;
   int mInotifyFd;
   std::atomic<bool> mStopped;
   int mEpollFd;

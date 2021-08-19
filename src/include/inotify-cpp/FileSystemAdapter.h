@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <optional>
 
-namespace stdx
+namespace inotifypp
 {
     namespace filesystem = std::filesystem;
 
@@ -23,7 +23,7 @@ namespace stdx
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 
-namespace stdx
+namespace inotifypp
 {
     namespace filesystem = boost::filesystem;
 
