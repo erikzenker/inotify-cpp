@@ -37,6 +37,10 @@ macro(configure_target target)
 
 endmacro(configure_target target)
 
+# add export for adapter
+install(TARGETS inotify-filesystem-adapter EXPORT inotify-filesystem-adapterExport)
+install(EXPORT inotify-filesystem-adapterExport DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 # library definition
 if(BUILD_SHARED_LIBS)
         add_library(${LIB_NAME}-shared SHARED ${LIB_SRCS} ${LIB_HEADER})
