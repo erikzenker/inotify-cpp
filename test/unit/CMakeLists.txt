@@ -9,15 +9,6 @@ if(NOT TARGET inotify-cpp::inotify-cpp)
 endif()
 
 ###############################################################################
-# Boost
-###############################################################################
-find_package(
-        Boost 1.54.0
-        COMPONENTS unit_test_framework
-        REQUIRED
-)
-
-###############################################################################
 # Thread
 ###############################################################################
 find_package(Threads)
@@ -26,7 +17,6 @@ find_package(Threads)
 # Test
 ###############################################################################
 add_executable(inotify_unit_test main.cpp NotifierBuilderTests.cpp EventTests.cpp)
-target_compile_features(inotify_unit_test PRIVATE cxx_std_17)
 target_link_libraries(inotify_unit_test
         PRIVATE
           inotify-cpp::inotify-cpp

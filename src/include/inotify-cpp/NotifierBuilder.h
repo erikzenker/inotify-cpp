@@ -2,8 +2,7 @@
 
 #include <inotify-cpp/Inotify.h>
 #include <inotify-cpp/Notification.h>
-
-#include <filesystem>
+#include <inotify-cpp/FileSystemAdapter.h>
 
 #include <memory>
 #include <string>
@@ -19,11 +18,11 @@ class NotifierBuilder {
     auto run() -> void;
     auto runOnce() -> void;
     auto stop() -> void;
-    auto watchPathRecursively(std::filesystem::path path) -> NotifierBuilder&;
-    auto watchFile(std::filesystem::path file) -> NotifierBuilder&;
-    auto unwatchFile(std::filesystem::path file) -> NotifierBuilder&;
-    auto ignoreFileOnce(std::filesystem::path file) -> NotifierBuilder&;
-    auto ignoreFile(std::filesystem::path file) -> NotifierBuilder&;
+    auto watchPathRecursively(inotifypp::filesystem::path path) -> NotifierBuilder&;
+    auto watchFile(inotifypp::filesystem::path file) -> NotifierBuilder&;
+    auto unwatchFile(inotifypp::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFileOnce(inotifypp::filesystem::path file) -> NotifierBuilder&;
+    auto ignoreFile(inotifypp::filesystem::path file) -> NotifierBuilder&;
     auto onEvent(Event event, EventObserver) -> NotifierBuilder&;
     auto onEvents(std::vector<Event> event, EventObserver) -> NotifierBuilder&;
     auto onUnexpectedEvent(EventObserver) -> NotifierBuilder&;

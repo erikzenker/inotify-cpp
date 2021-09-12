@@ -12,12 +12,6 @@ cmake_minimum_required(VERSION 3.8)
 project(${LIB_NAME} VERSION 0.2.0)
 include(GNUInstallDirs)
 
-# dependencies
-find_package(
-        Boost 1.54.0
-        REQUIRED
-)
-
 macro(configure_target target)
         set_target_properties(${target} PROPERTIES
                 LINKER_LANGUAGE CXX
@@ -39,8 +33,13 @@ macro(configure_target target)
         target_include_directories(${target} PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>)
-        target_compile_features(${target} PRIVATE cxx_std_17)
+        target_link_libraries(${target} PUBLIC inotify-filesystem-adapter)
+
 endmacro(configure_target target)
+
+# add export for adapter
+install(TARGETS inotify-filesystem-adapter EXPORT inotify-filesystem-adapterExport)
+install(EXPORT inotify-filesystem-adapterExport DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # library definition
 if(BUILD_SHARED_LIBS)

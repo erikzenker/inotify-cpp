@@ -10,7 +10,7 @@
 
 using namespace inotify;
 
-void openFile(const std::filesystem::path& file)
+void openFile(const inotifypp::filesystem::path& file)
 {
     std::ifstream stream;
     stream.open(file.string(), std::ifstream::in);
@@ -18,9 +18,9 @@ void openFile(const std::filesystem::path& file)
     stream.close();
 }
 
-void createFile(const std::filesystem::path& file)
+void createFile(const inotifypp::filesystem::path& file)
 {
-    std::ofstream stream(file);
+    std::ofstream stream(file.string());
 }
 
 struct NotifierBuilderTests {
@@ -32,8 +32,8 @@ struct NotifierBuilderTests {
         , createdFile_(testDirectory_ / "created.txt")
         , timeout_(1)
     {
-        std::filesystem::create_directories(testDirectory_);
-        std::filesystem::create_directories(recursiveTestDirectory_);
+        inotifypp::filesystem::create_directories(testDirectory_);
+        inotifypp::filesystem::create_directories(recursiveTestDirectory_);
 
         createFile(testFile_);
         createFile(recursiveTestFile_);
@@ -41,14 +41,14 @@ struct NotifierBuilderTests {
 
     ~NotifierBuilderTests()
     {
-        std::filesystem::remove_all(testDirectory_);
+        inotifypp::filesystem::remove_all(testDirectory_);
     }
 
-    std::filesystem::path testDirectory_;
-    std::filesystem::path recursiveTestDirectory_;
-    std::filesystem::path testFile_;
-    std::filesystem::path recursiveTestFile_;
-    std::filesystem::path createdFile_;
+    inotifypp::filesystem::path testDirectory_;
+    inotifypp::filesystem::path recursiveTestDirectory_;
+    inotifypp::filesystem::path testFile_;
+    inotifypp::filesystem::path recursiveTestFile_;
+    inotifypp::filesystem::path createdFile_;
 
     std::chrono::seconds timeout_;
 
@@ -139,7 +139,7 @@ BOOST_FIXTURE_TEST_CASE(shouldNotifyOnCombinedEvent, NotifierBuilderTests)
 
     std::thread thread([&notifier]() { notifier.runOnce(); });
 
-    std::filesystem::create_directories(testDirectory_ / "test");
+    inotifypp::filesystem::create_directories(testDirectory_ / "test");
 
     auto futureCombinedEvent = promisedCombinedEvent_.get_future();
     BOOST_CHECK(futureCombinedEvent.wait_for(timeout_) == std::future_status::ready);

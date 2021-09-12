@@ -2,7 +2,6 @@
 #include <inotify-cpp/Inotify.h>
 
 #include <iostream>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -10,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace fs = std::filesystem;
+namespace fs = inotifypp::filesystem;
 
 namespace inotify {
 
@@ -98,13 +97,13 @@ Inotify::~Inotify()
  */
 void Inotify::watchDirectoryRecursively(fs::path path)
 {
-    std::vector<std::filesystem::path> paths;
+    std::vector<fs::path> paths;
 
     if (fs::exists(path)) {
         paths.push_back(path);
 
         if (fs::is_directory(path)) {
-            std::error_code ec;
+            inotifypp::error_code ec;
             fs::recursive_directory_iterator it(
                 path, fs::directory_options::follow_directory_symlink, ec);
             fs::recursive_directory_iterator end;
@@ -236,7 +235,7 @@ void Inotify::setEventTimeout(
  * @return A new FileSystemEvent
  *
  */
-std::optional<FileSystemEvent> Inotify::getNextEvent()
+inotifypp::optional<FileSystemEvent> Inotify::getNextEvent()
 {
     std::vector<FileSystemEvent> newEvents;
 
@@ -247,7 +246,7 @@ std::optional<FileSystemEvent> Inotify::getNextEvent()
     }
 
     if (mStopped) {
-        return std::nullopt;
+        return inotifypp::nullopt();
     }
 
     auto event = mEventQueue.front();
