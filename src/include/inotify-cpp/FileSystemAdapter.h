@@ -14,7 +14,7 @@ namespace inotifypp
     template<typename T>
     using optional = std::optional<T>;
 
-    inline constexpr auto nullopt() { return std::nullopt; };
+    inline constexpr auto nullopt() { return std::nullopt; }
 
 }
 
