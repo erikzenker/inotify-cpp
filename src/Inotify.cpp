@@ -105,7 +105,11 @@ void Inotify::watchDirectoryRecursively(fs::path path)
         if (fs::is_directory(path)) {
             inotifypp::error_code ec;
             fs::recursive_directory_iterator it(
+              #if !defined USE_BOOST_FILESYSTEM || (defined USE_BOOST_FILESYSTEM && BOOST_VERSION >= 107200)
                 path, fs::directory_options::follow_directory_symlink, ec);
+               #else
+                path, ec);
+               #endif
             fs::recursive_directory_iterator end;
 
             for (; it != end; it.increment(ec)) {
