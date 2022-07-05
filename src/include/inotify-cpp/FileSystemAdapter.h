@@ -22,6 +22,7 @@ namespace inotifypp
 
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
+#include <boost/version.hpp>
 
 namespace inotifypp
 {
@@ -32,7 +33,7 @@ namespace inotifypp
     template<typename T>
     using optional = boost::optional<T>;
 
-    inline constexpr boost::none_t nullopt() { return boost::none; };
+    inline boost::none_t nullopt() { return boost::none; };
 }
 
 #endif

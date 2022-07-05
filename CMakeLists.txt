@@ -23,7 +23,7 @@ find_package(Boost 1.54.0 COMPONENTS ${USED_BOOST_LIBS} REQUIRED)
 
 add_library(inotify-filesystem-adapter INTERFACE)
 if(CMAKE_CXX_STANDARD LESS 17 OR USE_BOOST_FILESYSTEM)
-    add_definitions(-DUSE_BOOST_FILESYSTEM)
+    target_compile_definitions(inotify-filesystem-adapter INTERFACE USE_BOOST_FILESYSTEM)
     target_link_libraries(inotify-filesystem-adapter INTERFACE Boost::filesystem)
 else()
     target_link_libraries(inotify-filesystem-adapter INTERFACE stdc++fs)
