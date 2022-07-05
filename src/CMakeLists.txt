@@ -35,6 +35,9 @@ macro(configure_target target)
                 $<INSTALL_INTERFACE:include>
                 ${Boost_INCLUDE_DIR})
         target_link_libraries(${target} PUBLIC inotify-filesystem-adapter)
+	if(CMAKE_CXX_STANDARD LESS 17 OR USE_BOOST_FILESYSTEM)
+	        target_compile_definitions(${target} PUBLIC USE_BOOST_FILESYSTEM)
+        endif()
 
 endmacro(configure_target target)
 
