@@ -8,6 +8,29 @@ the implementation of a simple filesystem event watcher for the commandline.
 
 ## Usage ##
 
+### git submodule approach ###
+
+```bash
+sudo apt install libboost-dev
+sudo apt install libboost-test-dev
+cd thirdparty
+git submodule add https://github.com/erikzenker/inotify-cpp
+```
+
+```cmake
+macro(set_option option value)
+    set(${option} ${value} CACHE INTERNAL "" FORCE)
+endmacro()
+set_option(BUILD_EXAMPLE OFF)
+set_option(BUILD_TEST OFF)
+set_option(BUILD_SHARED_LIBS OFF)
+set_option(BUILD_STATIC_LIBS ON)
+add_subdirectory(thirdparty/inotify-cpp)
+
+add_executable(my-app)
+target_link_libraries(my-app PRIVATE inotify-cpp-static)
+```
+
   ```c++
 #include <inotify-cpp/NotifierBuilder.h>
 
