@@ -46,7 +46,19 @@ auto NotifierBuilder::ignoreFile(inotifypp::filesystem::path file) -> NotifierBu
 auto NotifierBuilder::onEvent(Event event, EventObserver eventObserver) -> NotifierBuilder&
 {
     mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
-    mEventObserver[event] = eventObserver;
+    switch (event) {
+        case Event::move:
+            mEventObserver[Event::moved_from] = eventObserver;
+            mEventObserver[Event::moved_to] = eventObserver;
+            break;
+        case Event::close:
+            mEventObserver[Event::close_write] = eventObserver;
+            mEventObserver[Event::close_nowrite] = eventObserver;
+            break;
+        default:
+            mEventObserver[event] = eventObserver;
+            break;
+    }
     return *this;
 }
 
@@ -54,8 +66,7 @@ auto NotifierBuilder::onEvents(std::vector<Event> events, EventObserver eventObs
     -> NotifierBuilder&
 {
     for (auto event : events) {
-        mInotify->setEventMask(mInotify->getEventMask() | static_cast<std::uint32_t>(event));
-        mEventObserver[event] = eventObserver;
+        onEvent(event, eventObserver);
     }
 
     return *this;
